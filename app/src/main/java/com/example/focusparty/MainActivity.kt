@@ -5,21 +5,28 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.MaterialTheme
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.focusparty.model.Database
+import com.example.focusparty.model.factories.HomeViewModelFactory
+import com.example.focusparty.view.HomeScreen
+import com.example.focusparty.viewmodel.HomeViewModel
 
 class MainActivity : ComponentActivity() {
+
+    companion object {
+        const val UserID = ""
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val db = BooksDb()                          // ton SQLiteOpenHelper
-        val factory = BooksVMFactory(db)                // ton factory
+        val db = Database()
+        val factory = HomeViewModelFactory(db)
 
         setContent {
-
-            val vm: BooksViewModel = viewModel(factory = factory)
+            val vm: HomeViewModel = viewModel(factory = factory)
 
             MaterialTheme {
-                BooksScreen(vm)                         // ton ecran Compose
+                HomeScreen(vm,UserID)
             }
         }
     }

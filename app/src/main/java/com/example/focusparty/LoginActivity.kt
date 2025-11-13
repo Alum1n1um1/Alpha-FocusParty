@@ -32,7 +32,8 @@ class LoginActivity : ComponentActivity() {
                 if (task.isSuccessful) {
                     val user = auth.currentUser
                     if (user != null && user.isEmailVerified) {
-                        startActivity(Intent(this, MainActivity::class.java))
+                        val intent = Intent(this, MainActivity::class.java)
+                        startActivity(intent)
                         finish()
                     }
                 }
