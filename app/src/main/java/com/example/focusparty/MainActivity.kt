@@ -11,7 +11,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val db = BooksDb(this)                          // ton SQLiteOpenHelper
+        val db = BooksDb()                          // ton SQLiteOpenHelper
         val factory = BooksVMFactory(db)                // ton factory
 
         setContent {

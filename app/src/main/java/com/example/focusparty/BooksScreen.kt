@@ -8,7 +8,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 
 
@@ -68,7 +67,7 @@ fun BooksScreen(vm: BooksViewModel) {
         var titre by remember { mutableStateOf(initial.titre) }
         var auteur by remember { mutableStateOf(initial.auteur) }
         var annee by remember { mutableStateOf(if (initial.annee == 0) "" else initial.annee.toString()) }
-        val isEdit = initial.id != 0L
+        val isEdit = initial.id != ""
         val ok = titre.isNotBlank() && auteur.isNotBlank() && annee.toIntOrNull() != null
 
         AlertDialog(
