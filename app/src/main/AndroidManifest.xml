@@ -14,14 +14,14 @@
 
 
         <activity android:name=".MainActivity"
-            android:theme="@style/Theme.FocusParty">
+            android:theme="@style/Theme.FocusParty"><!--Remplacer par MainActivity !!-->
         </activity>
         <activity android:name=".RegisterActivity"
             android:theme="@style/Theme.FocusParty">
         </activity>
         <activity android:name=".LoginActivity"
             android:theme="@style/Theme.FocusParty"
-            android:exported="true">
+            android:exported="true"> <!--Remplacer par LoginActivity !!-->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

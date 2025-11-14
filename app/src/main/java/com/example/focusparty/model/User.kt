@@ -7,5 +7,6 @@ data class User(
     val exp:Int,
     val friends:List<String>,
     val rooms:List<String>,
-    val comment:String
+    val comment:String,
+    val points:Int
 )

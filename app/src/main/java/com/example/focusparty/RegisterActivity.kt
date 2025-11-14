@@ -4,6 +4,8 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import com.example.focusparty.model.Database
+import com.example.focusparty.ui.theme.FocusPartyTheme
 import com.google.firebase.auth.FirebaseAuth
 import com.example.focusparty.view.*
 
@@ -16,14 +18,16 @@ class RegisterActivity : ComponentActivity() {
         auth = FirebaseAuth.getInstance()
 
         setContent {
-            RegisterScreen(
-                onRegisterClick = { email, password ->
-                    registerUser(email, password)
-                },
-                onLoginClick = {
-                    startActivity(Intent(this, LoginActivity::class.java))
-                }
-            )
+            FocusPartyTheme {
+                RegisterScreen(
+                    onRegisterClick = { email, password ->
+                        registerUser(email, password)
+                    },
+                    onLoginClick = {
+                        startActivity(Intent(this, LoginActivity::class.java))
+                    }
+                )
+            }
         }
     }
 
@@ -36,6 +40,8 @@ class RegisterActivity : ComponentActivity() {
                     user?.sendEmailVerification()
                         ?.addOnCompleteListener { verificationTask ->
                             if (verificationTask.isSuccessful) {
+                                val db = Database.getInstance()
+                                db.addUser(user.uid,email)
 
                                 // Déconnexion immédiate après l'inscription
                                 auth.signOut()

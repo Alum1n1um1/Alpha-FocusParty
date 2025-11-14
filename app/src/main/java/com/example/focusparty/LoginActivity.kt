@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import com.example.focusparty.ui.theme.FocusPartyTheme
 import com.google.firebase.auth.FirebaseAuth
 import com.example.focusparty.view.*
 class LoginActivity : ComponentActivity() {
@@ -15,14 +16,16 @@ class LoginActivity : ComponentActivity() {
         auth = FirebaseAuth.getInstance()
 
         setContent {
-            LoginScreen(
-                onLoginClick = { email, password ->
-                    loginUser(email, password)
-                },
-                onRegisterClick = {
-                    startActivity(Intent(this, RegisterActivity::class.java))
-                }
-            )
+            FocusPartyTheme {
+                LoginScreen(
+                    onLoginClick = { email, password ->
+                        loginUser(email, password)
+                    },
+                    onRegisterClick = {
+                        startActivity(Intent(this, RegisterActivity::class.java))
+                    }
+                )
+            }
         }
     }
 

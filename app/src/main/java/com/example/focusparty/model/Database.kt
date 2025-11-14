@@ -1,6 +1,8 @@
 package com.example.focusparty.model
 
 import com.google.firebase.Firebase
+import com.google.firebase.firestore.CollectionReference
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.firestore
@@ -13,6 +15,13 @@ import java.util.Date
 class Database(
     private val store: FirebaseFirestore = Firebase.firestore
 ) {
+    companion object {
+        private val _db = Database()
+        fun getInstance(): Database {
+            return _db
+        }
+    }
+
     private val users = store.collection("Users")
     private val rooms = store.collection("rooms")
     private val events = store.collection("Events")
@@ -23,10 +32,11 @@ class Database(
             "email" to email,
             "level" to 1,
             "exp" to 0,
-            "friends" to {},
-            "rooms" to {},
+            "friends" to listOf<String>(),
+            "rooms" to listOf<String>(),
             "comment" to "",
-            "first_connection" to true
+            "first_connection" to true,
+            "points" to 500
         )
         users.document(uid).set(user)
     }
@@ -65,8 +75,32 @@ class Database(
         awaitClose { reg.remove() }
     }
 
-    fun getRoomsOf(uid:String) { // Récupère les salons de l'utilisateur
-        TODO()
+    fun getRoomsOf(uid:String) : Flow<List<Room>> = callbackFlow { // Récupère les salons de l'utilisateur
+        val query = store
+            .collection("rooms")
+            .whereArrayContains("members", uid)
+
+        val registration = query.addSnapshotListener { snap, err ->
+            if (err != null) {
+                trySend(emptyList())
+                return@addSnapshotListener
+            }
+
+            val list = snap?.documents?.mapNotNull { doc ->
+                Room(
+                    name = doc.getString("name") ?: "",
+                    owner = doc.getString("owner") ?: "",
+                    description = doc.getString("description") ?: "",
+                    status = (doc.getLong("status") ?: 0L).toInt(),
+                    members = doc.get("members") as? List<String> ?: emptyList(),
+                    jalons = doc.get("jalons") as? List<String> ?: emptyList()
+                )
+            }.orEmpty()
+
+            trySend(list)
+        }
+
+        awaitClose { registration.remove() }
     }
 
 
@@ -117,6 +151,33 @@ class Database(
         TODO()
     }
 
+    suspend fun getDocumentSnapshot(collectionPath: String, doc:String): DocumentSnapshot?{
+        return try {
+            store
+                .collection(collectionPath)
+                .document(doc)
+                .get()
+                .await()
+        } catch (e: Exception) {
+            null
+        }
+    }
 
+    suspend fun getUserPoints(uid: String?):Int {
+        if (uid == null) return 0
+        val snapshot = getDocumentSnapshot("Users",uid)
+        return snapshot?.getLong("points")?.toInt() ?: 0
+    }
 
+    suspend fun getUserLevel(uid: String?):Int {
+        if (uid == null) return 1
+        val snapshot = getDocumentSnapshot("Users",uid)
+        return snapshot?.getLong("level")?.toInt() ?: 1
+    }
+
+    suspend fun getUserExp(uid: String?):Int {
+        if (uid == null) return 0
+        val snapshot = getDocumentSnapshot("Users",uid)
+        return snapshot?.getLong("exp")?.toInt() ?: 0
+    }
 }
