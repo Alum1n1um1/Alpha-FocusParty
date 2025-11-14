@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "648348280485",
+    "project_id": "focusparty-d06cf",
+    "storage_bucket": "focusparty-d06cf.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:648348280485:android:7f067b22bab476b6818f4c",
+        "android_client_info": {
+          "package_name": "com.example.focusparty"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "648348280485-9ns0og66dd6o534030uj2l9ekr1lq4c4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDZFEQ4SNAtdTohICy6EzSbkWTV3LwnS8U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "648348280485-9ns0og66dd6o534030uj2l9ekr1lq4c4.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

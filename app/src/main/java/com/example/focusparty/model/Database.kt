@@ -41,8 +41,20 @@ class Database(
         users.document(uid).set(user)
     }
 
-    fun addRoom(room: Room){
-        TODO()
+    fun addRoom(room: Room) {
+
+        val doc = rooms.document() // ID auto-généré
+
+        val data = hashMapOf(
+            "name" to room.name,
+            "owner" to room.owner,
+            "description" to room.description,
+            "status" to room.status,
+            "members" to room.members,
+            "jalons" to room.jalons
+        )
+
+        doc.set(data)
     }
 
     fun getRooms(): Flow<List<Room>> = callbackFlow { // Récupère toutes les rooms
@@ -105,7 +117,7 @@ class Database(
 
 
     fun getUsers() { // Récupère tous les utilisateurs
-        TODO()
+        // TODO
     }
 
     fun getEvents(): Flow<List<Event>> = callbackFlow { // Récupère tous les évènements
@@ -138,6 +150,35 @@ class Database(
         }
         awaitClose { reg.remove() }
     }
+    fun getEventsOf(uid: String): Flow<List<Event>> = callbackFlow {
+        val query = store
+            .collection("events")
+            .whereArrayContains("members", uid)
+
+        val registration = query.addSnapshotListener { snap, err ->
+            if (err != null) {
+                trySend(emptyList())
+                return@addSnapshotListener
+            }
+
+            val list = snap?.documents?.mapNotNull { doc ->
+                Event(
+                    name = doc.getString("name") ?: "",
+                    date_start = doc.getDate("date_start") ?: Date(),
+                    deadline = doc.getDate("deadline") ?: Date(),
+                    perodicity = doc.getString("periodicity") ?: "",
+                    members = doc.get("members") as? List<String> ?: emptyList(),
+                    notif = doc.get("notif") as? List<String> ?: emptyList(),
+                    priority = doc.getString("priority") ?: ""
+                )
+            }.orEmpty()
+
+            trySend(list)
+        }
+
+        awaitClose { registration.remove() }
+    }
+
 
     fun getFriends(user:String) { // Récupère les amis de l'utilisateur
         TODO()

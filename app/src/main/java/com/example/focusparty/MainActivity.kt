@@ -7,6 +7,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.focusparty.model.Database
 import com.example.focusparty.model.factories.HomeViewModelFactory
+import com.example.focusparty.ui.theme.AppTheme
 import com.example.focusparty.ui.theme.FocusPartyTheme
 import com.example.focusparty.view.HomeScreen
 import com.example.focusparty.viewmodel.HomeViewModel
@@ -22,7 +23,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             val vm: HomeViewModel = viewModel(factory = factory)
 
-            FocusPartyTheme {
+            AppTheme {
                 HomeScreen(vm)
             }
         }

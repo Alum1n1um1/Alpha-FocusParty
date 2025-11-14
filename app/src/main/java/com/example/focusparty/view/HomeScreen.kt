@@ -1,6 +1,5 @@
 package com.example.focusparty.view
 
-import android.widget.ProgressBar
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -8,7 +7,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Nature
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.material3.HorizontalDivider
@@ -16,18 +17,14 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.example.focusparty.model.Database
 import com.example.focusparty.model.Event
 import com.example.focusparty.model.Room
-import com.example.focusparty.ui.theme.Surface
 import com.example.focusparty.viewmodel.HomeViewModel
-import com.google.firebase.auth.FirebaseAuth
 import java.time.LocalDate
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-
 
 @Composable
 fun HomeScreen(vm: HomeViewModel) {
@@ -46,7 +43,7 @@ fun HomeScreen(vm: HomeViewModel) {
             }
             HorizontalDivider(
                 thickness = 1.dp,
-                color = MaterialTheme.colorScheme.primary,
+                color = MaterialTheme.colorScheme.secondary,
                 modifier = Modifier
                     .fillMaxWidth(0.65f)
                     .weight(1f)
@@ -57,7 +54,7 @@ fun HomeScreen(vm: HomeViewModel) {
             }
             HorizontalDivider(
                 thickness = 1.dp,
-                color = MaterialTheme.colorScheme.primary,
+                color = MaterialTheme.colorScheme.secondary,
                 modifier = Modifier
                     .fillMaxWidth(0.65f)
                     .weight(1f)
@@ -91,7 +88,7 @@ fun HomeTopBar(vm: HomeViewModel) {
                 IconButton(
                     onClick = { vm.GoToCalendar() },
                     colors = IconButtonDefaults.iconButtonColors(
-                        contentColor = MaterialTheme.colorScheme.secondary
+                        contentColor = MaterialTheme.colorScheme.onPrimary
                     )
                 ) {
                     Icon(Icons.Default.CalendarToday, contentDescription = "Calendrier")
@@ -104,7 +101,7 @@ fun HomeTopBar(vm: HomeViewModel) {
                 contentAlignment = Alignment.Center
             ) {
                 val date = LocalDate.now()
-                val formatter = DateTimeFormatter.ofPattern("dd/MMM/yyyy")
+                val formatter = DateTimeFormatter.ofPattern("dd MMM yyyy")
                 Text(
                     text = date.format(formatter)
                 )
@@ -119,7 +116,7 @@ fun HomeTopBar(vm: HomeViewModel) {
                     IconButton(
                         onClick = { vm.GoToUserMenu() },
                         colors = IconButtonDefaults.iconButtonColors(
-                            contentColor = MaterialTheme.colorScheme.secondary
+                            contentColor = MaterialTheme.colorScheme.onPrimary
                         )
                     ) {
                         Icon(Icons.Default.AccountCircle, contentDescription = "Compte")
@@ -128,7 +125,7 @@ fun HomeTopBar(vm: HomeViewModel) {
                     IconButton(
                         onClick = { vm.ShareApp() },
                         colors = IconButtonDefaults.iconButtonColors(
-                            contentColor = MaterialTheme.colorScheme.secondary
+                            contentColor = MaterialTheme.colorScheme.onPrimary
                         )
                     ) {
                         Icon(Icons.Default.Share, contentDescription = "Partager")
@@ -138,6 +135,7 @@ fun HomeTopBar(vm: HomeViewModel) {
         }
     }
 }
+
 
 @Composable
 fun Stats(vm: HomeViewModel){
@@ -220,29 +218,161 @@ fun Stats(vm: HomeViewModel){
     }
 }
 
-@Composable
-fun RoomsSection(vm: HomeViewModel){
-    val rooms by vm.rooms.collectAsState()
 
-    Surface(
-        color = MaterialTheme.colorScheme.surface,
-    ) {
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-        ) {
+@Composable
+fun RoomsSection(vm: HomeViewModel) {
+    val rooms by vm.rooms.collectAsState()
+    var showDialog by remember { mutableStateOf(false) }
+
+    if (showDialog) {
+        CreateRoomDialog(
+            onDismiss = { showDialog = false },
+            onConfirm = { name, description, jalons ->
+                vm.createRoom(name, description, jalons)
+                showDialog = false
+            }
+        )
+    }
+
+    Surface(color = MaterialTheme.colorScheme.surface) {
+        LazyColumn(modifier = Modifier.fillMaxSize()) {
+
+            item {
+                AddRoomButton { showDialog = true }
+            }
+
             items(rooms) { room ->
-                RoomItem(room)
+                RoomItem(room,vm)
             }
         }
     }
 }
 
+
+@Composable
+fun AddRoomButton(onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(12.dp),
+        horizontalArrangement = Arrangement.Start,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Button(
+            onClick = onClick,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.secondary,
+                contentColor = MaterialTheme.colorScheme.onSecondary
+            )
+        ) {
+            Text("Ajouter un salon")
+        }
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        Icon(
+            Icons.Default.Add,
+            contentDescription = "Ajouter un salon"
+        )
+    }
+}
+
+
+@Composable
+fun CreateRoomDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (String, String, List<String>) -> Unit
+) {
+    var name by remember { mutableStateOf("") }
+    var description by remember { mutableStateOf("") }
+    var jalonsText by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Créer un salon") },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Nom") },
+                    singleLine = true
+                )
+
+                OutlinedTextField(
+                    value = description,
+                    onValueChange = { description = it },
+                    label = { Text("Description") }
+                )
+
+                OutlinedTextField(
+                    value = jalonsText,
+                    onValueChange = { jalonsText = it },
+                    label = { Text("Jalons (séparés par des virgules)") }
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    val jalons = jalonsText
+                        .split(",")
+                        .map { it.trim() }
+                        .filter { it.isNotEmpty() }
+
+                    onConfirm(name, description, jalons)
+                }
+            ) {
+                Text("Créer")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Annuler")
+            }
+        }
+    )
+}
+
+
+@Composable
+fun RoomItem(room:Room,vm: HomeViewModel){ // 1 salon, TODO : name + nombre de personnes dans le salon + lvl du salon (avec icone d'arbre)
+    Surface(
+        color = MaterialTheme.colorScheme.surface,
+        onClick =  { vm.GoToRoom(room) }
+    ){
+        Row(
+
+        ){
+            Text(text = room.name)
+            Row (
+
+            ){
+                Column(
+
+                ){
+                    Icon(
+                        Icons.Default.AccountCircle,
+                        contentDescription = "personnage"
+                    )
+                    Text(text="TODO") // TODO : nombre de personnes dans le salon
+                }
+                Icon(
+                    Icons.Default.Nature,
+                    contentDescription = "arbre ou plante"
+                )
+            }
+        }
+
+    }
+}
+
+
 @Composable
 fun EventSection(vm: HomeViewModel) {
     val events by vm.events.collectAsState()
     Surface(
-        color = MaterialTheme.colorScheme.surface,
+        color = MaterialTheme.colorScheme.surfaceContainer,
     ){
         LazyColumn {
             items(events) { event ->
@@ -254,19 +384,49 @@ fun EventSection(vm: HomeViewModel) {
 
 
 @Composable
-fun RoomItem(room:Room){ // 1 salon, TODO : name + nombre de personnes dans le salon + lvl du salon (avec icone d'arbre)
-    Surface(
-        color = MaterialTheme.colorScheme.tertiary,
-    ){
-        Text(text = room.name)
-    }
-
-}
-@Composable
 fun EventItem(event:Event){ // 1 event, TODO : name + deadline + priorité (urgence ?)
     Surface(
-        color = MaterialTheme.colorScheme.tertiary,
+        color = MaterialTheme.colorScheme.surface,
     ){
-        Text(text = event.name)
+        Row(){
+            Box(
+                modifier = Modifier.weight(1f)
+            ){
+                Text(
+                    text=event.name,
+                    color=MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    textAlign = TextAlign.Center
+                )
+            }
+            Box(
+                modifier = Modifier.weight(1f)
+            ){
+                val formatter = DateTimeFormatter.ofPattern("dd MMM yyyy")
+                Text(
+                    text=event.deadline
+                        .toInstant()
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalDate()
+                        .format(formatter),
+                    color=MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    textAlign = TextAlign.Center
+                )
+            }
+            Box(
+                modifier = Modifier.weight(1f)
+            ){
+                Text(
+                    text=event.priority,
+                    color=MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
     }
 }
