@@ -1,22 +1,22 @@
 package com.example.focusparty.viewmodel
 
 import androidx.lifecycle.*
+import androidx.navigation.NavController
 import com.example.focusparty.model.*
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 
 class HomeViewModel(
-    private val db: Database
+    private val db: Database,
+    private val navController: NavController
 ) : ViewModel() {
-    val auth = FirebaseAuth.getInstance()
-    val user = auth.currentUser
-    val tempUid = "KqCVHKRU54hwhAPo7aTj9mTyrur1" // temporary !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    val rooms = db.getRoomsOf(user?.uid?:tempUid).stateIn(
+    val rooms = db.getRoomsOf(uid).stateIn(
         viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList()
     )
-    val events = db.getEventsOf(user?.uid?:tempUid).stateIn(
+    val events = db.getEventsOf(uid).stateIn(
         viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList()
     )
     private val _availablePoints = MutableStateFlow(0)
@@ -27,6 +27,7 @@ class HomeViewModel(
     val exp = _exp
 
     fun GoToCalendar(){
+        navController.navigate("calendar")
     }
 
     fun GoToUserMenu(){
@@ -36,24 +37,24 @@ class HomeViewModel(
     }
 
     fun GoToRoom(room: Room){
-
+        navController.navigate("room")
     }
 
     fun loadAvailablePoints() {
         viewModelScope.launch {
-            _availablePoints.value = db.getUserPoints(user?.uid?:tempUid)
+            _availablePoints.value = db.getUserPoints(uid)
         }
     }
 
     fun loadLevel() {
         viewModelScope.launch {
-            _level.value = db.getUserLevel(user?.uid?:tempUid)
+            _level.value = db.getUserLevel(uid)
         }
     }
 
     fun loadExp() {
         viewModelScope.launch {
-        _exp.value = db.getUserExp(user?.uid?:tempUid)
+        _exp.value = db.getUserExp(uid)
         }
     }
 
@@ -72,5 +73,9 @@ class HomeViewModel(
         viewModelScope.launch {
             db.addRoom(newRoom)
         }
+    }
+
+    fun handleDate(selectedDate: LocalDate) {
+
     }
 }

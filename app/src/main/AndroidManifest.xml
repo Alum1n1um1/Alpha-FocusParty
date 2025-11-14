@@ -13,13 +13,13 @@
         android:theme="@style/Theme.FocusParty">
 
 
-        <activity android:name=".LoginActivity"
+        <activity android:name=".Activities.LoginActivity"
             android:theme="@style/Theme.FocusParty"><!--Remplacer par MainActivity !!-->
         </activity>
-        <activity android:name=".RegisterActivity"
+        <activity android:name=".Activities.RegisterActivity"
             android:theme="@style/Theme.FocusParty">
         </activity>
-        <activity android:name=".MainActivity"
+        <activity android:name=".Activities.MainActivity"
             android:theme="@style/Theme.FocusParty"
             android:exported="true"> <!--Remplacer par LoginActivity !!-->
             <intent-filter>

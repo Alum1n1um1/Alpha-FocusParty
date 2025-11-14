@@ -1,4 +1,4 @@
-package com.example.focusparty
+package com.example.focusparty.Activities
 
 import android.content.Intent
 import android.os.Bundle

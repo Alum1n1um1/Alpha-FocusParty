@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
 import com.example.focusparty.model.Event
 import com.example.focusparty.model.Room
 import com.example.focusparty.viewmodel.HomeViewModel
@@ -27,7 +28,7 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 @Composable
-fun HomeScreen(vm: HomeViewModel) {
+fun HomeScreen(vm: HomeViewModel, navController: NavHostController) {
     Column (
         modifier = Modifier
             .fillMaxSize()

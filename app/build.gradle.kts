@@ -43,8 +43,6 @@ android {
 }
 
 dependencies {
-
-
     // Firebase : Firestore
     implementation(libs.firebase.firestore)
     // Firebase : Auth
@@ -52,27 +50,21 @@ dependencies {
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-auth")
     implementation(libs.androidx.runtime)
-
+    implementation(libs.androidx.navigation.runtime.ktx)
     // Compose
     val composeBom = platform("androidx.compose:compose-bom:2025.10.01")
     implementation(composeBom)
     androidTestImplementation(composeBom)
-
-
     // Material Design 3
     implementation("androidx.compose.material3:material3")
-
     // Android Studio Preview support
     implementation("androidx.compose.ui:ui-tooling-preview")
     debugImplementation("androidx.compose.ui:ui-tooling")
-
     // UI Tests
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
-
     // Optional - Add window size utils
     implementation("androidx.compose.material3.adaptive:adaptive")
-
     // Optional - Integration with activities
     implementation("androidx.activity:activity-compose:1.11.0")
     // Optional - Integration with ViewModels
@@ -81,19 +73,16 @@ dependencies {
     implementation("androidx.compose.runtime:runtime-livedata")
     // Optional - Integration with RxJava
     implementation("androidx.compose.runtime:runtime-rxjava2")
-
-
     implementation("com.google.android.material:material:1.12.0")
-
     // Intégration des icons
     implementation("androidx.compose.material:material-icons-extended:<version>")
-
     // Intégration de la date
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
-
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    // Navigation
+    implementation("androidx.navigation:navigation-compose")
 
 
 }
