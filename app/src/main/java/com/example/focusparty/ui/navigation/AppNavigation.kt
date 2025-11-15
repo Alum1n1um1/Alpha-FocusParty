@@ -85,7 +85,6 @@ fun AppNavigation(
             }
         }
 
-
         composable("Register") {
             val vm: RegisterViewModel = viewModel(
                 factory = RegisterViewModelFactory(db)
