@@ -1,4 +1,4 @@
-package com.example.focusparty.model.factories
+package com.example.focusparty.viewmodel.factories
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider

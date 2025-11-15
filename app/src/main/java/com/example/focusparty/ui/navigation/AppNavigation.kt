@@ -3,17 +3,17 @@ package com.example.focusparty.ui.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import com.example.focusparty.model.Database
-import com.example.focusparty.model.factories.CalendarViewModelFactory
-import com.example.focusparty.model.factories.HomeViewModelFactory
-import com.example.focusparty.model.factories.LoginViewModelFactory
-import com.example.focusparty.model.factories.RegisterViewModelFactory
-import com.example.focusparty.model.factories.RoomViewModelFactory
+import com.example.focusparty.viewmodel.factories.CalendarViewModelFactory
+import com.example.focusparty.viewmodel.factories.HomeViewModelFactory
+import com.example.focusparty.viewmodel.factories.RegisterViewModelFactory
+import com.example.focusparty.viewmodel.factories.RoomViewModelFactory
 import com.example.focusparty.view.HomeScreen
 import com.example.focusparty.view.CalendarScreen
 import com.example.focusparty.view.LoginScreen
@@ -56,13 +56,20 @@ fun AppNavigation(
             )
         }
 
-        composable("Room") {
+        composable(
+            route = "Room/{RoomID}",
+            arguments = listOf(
+                navArgument("roomId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val roomId = backStackEntry.arguments?.getString("roomId") ?: ""
+
             val vm: RoomViewModel = viewModel(
-                factory = RoomViewModelFactory(db, navController)
+                factory = RoomViewModelFactory(db, navController, roomId)
             )
             RoomScreen(
-                vm,
-                navController)
+                vm = vm
+            )
         }
 
         composable("Login") {

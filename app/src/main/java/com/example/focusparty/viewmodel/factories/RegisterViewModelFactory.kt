@@ -1,20 +1,18 @@
-package com.example.focusparty.model.factories
+package com.example.focusparty.viewmodel.factories
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import androidx.navigation.NavController
 import com.example.focusparty.model.Database
-import com.example.focusparty.viewmodel.HomeViewModel
+import com.example.focusparty.viewmodel.RegisterViewModel
 
 
-class HomeViewModelFactory(
+class RegisterViewModelFactory(
     private val db: Database,
-    private val navController: NavController
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(clazz: Class<T>): T {
-        if (clazz.isAssignableFrom(HomeViewModel::class.java)) {
+        if (clazz.isAssignableFrom(RegisterViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return HomeViewModel(db,navController) as T
+            return RegisterViewModel(db) as T
         }
         error("Unknown VM: $clazz")
     }

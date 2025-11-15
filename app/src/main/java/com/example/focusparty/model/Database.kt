@@ -71,7 +71,13 @@ class Database(
                 val description = doc.getString("description") ?: ""
                 val status = (doc.getLong("status") ?: 0L).toInt()
                 val members = doc.get("members") as? List<String> ?: emptyList()
-                val jalons = doc.get("jalons") as? List<String> ?: emptyList()
+                val jalons = (doc.get("jalons") as? List<Map<String, Any>>)
+                    ?.map { map ->
+                        Jalon(
+                            name = map["name"] as? String ?: "",
+                            isDone = map["done"] as? Boolean ?: false
+                        )
+                    } ?: emptyList()
 
                 Room(name = name,
                     owner = owner,
@@ -98,18 +104,65 @@ class Database(
                 return@addSnapshotListener
             }
 
+
+
             val list = snap?.documents?.mapNotNull { doc ->
+
+                val jalons = (doc.get("jalons") as? List<Map<String, Any>>)
+                    ?.map { map ->
+                        Jalon(
+                            name = map["name"] as? String ?: "",
+                            isDone = map["done"] as? Boolean ?: false
+                        )
+                    } ?: emptyList()
+
                 Room(
                     name = doc.getString("name") ?: "",
                     owner = doc.getString("owner") ?: "",
                     description = doc.getString("description") ?: "",
                     status = (doc.getLong("status") ?: 0L).toInt(),
                     members = doc.get("members") as? List<String> ?: emptyList(),
-                    jalons = doc.get("jalons") as? List<String> ?: emptyList()
+                    jalons = jalons
                 )
             }.orEmpty()
 
             trySend(list)
+        }
+
+        awaitClose { registration.remove() }
+    }
+
+    fun getRoomById(roomId: String): Flow<Room?> = callbackFlow {
+
+        val docRef = store.collection("rooms").document(roomId)
+
+        val registration = docRef.addSnapshotListener { snap, err ->
+            if (err != null) {
+                trySend(null)
+                return@addSnapshotListener
+            }
+
+            if (snap != null && snap.exists()) {
+                val jalons = (snap.get("jalons") as? List<Map<String, Any>>)
+                    ?.map { map ->
+                        Jalon(
+                            name = map["name"] as? String ?: "",
+                            isDone = map["isDone"] as? Boolean ?: false
+                        )
+                    } ?: emptyList()
+                val room = Room(
+                    name = snap.getString("name") ?: "",
+                    owner = snap.getString("owner") ?: "",
+                    description = snap.getString("description") ?: "",
+                    status = (snap.getLong("status") ?: 0L).toInt(),
+                    members = snap.get("members") as? List<String> ?: emptyList(),
+                    jalons = jalons
+                )
+
+                trySend(room)
+            } else {
+                trySend(null)
+            }
         }
 
         awaitClose { registration.remove() }

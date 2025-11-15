@@ -271,10 +271,12 @@ fun AddRoomButton(onClick: () -> Unit) {
 
         Spacer(modifier = Modifier.width(8.dp))
 
-        Icon(
-            Icons.Default.Add,
-            contentDescription = "Ajouter un salon"
-        )
+        IconButton(
+            onClick = onClick
+        ) {
+            Icon(Icons.Default.Add, contentDescription = "Ajouter un salon")
+        }
+
     }
 }
 

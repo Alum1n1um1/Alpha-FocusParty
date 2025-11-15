@@ -6,5 +6,5 @@ data class Room(
     val description:String,
     val status: Int,
     val members: List<String>,
-    val jalons: List<String>
+    val jalons: List<Jalon>
 )
