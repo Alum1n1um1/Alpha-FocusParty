@@ -51,10 +51,7 @@ fun RoomContent(
         SalonTopBar(vm)
         DashBoard(vm)
         ActionsMenu(vm)
-
     }
-
-
 }
 @Composable
 fun SalonTopBar(vm: RoomViewModel) {
@@ -111,6 +108,7 @@ fun SalonTopBar(vm: RoomViewModel) {
         }
     }
 }
+
 @Composable
 fun ActionsMenu(vm: RoomViewModel) {
 }
@@ -129,6 +127,8 @@ fun DashBoard(vm: RoomViewModel) {
             }
         }
     }
+
+
 }
 
 @Composable
