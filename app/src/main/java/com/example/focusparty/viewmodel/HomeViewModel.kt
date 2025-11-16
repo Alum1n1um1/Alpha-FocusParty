@@ -67,7 +67,8 @@ class HomeViewModel(
             description = description,
             status = 0,
             members = listOf(uid),
-            jalons = jalons
+            jalons = jalons,
+            timer = Timer()
         )
 
         viewModelScope.launch {

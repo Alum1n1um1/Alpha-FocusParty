@@ -11,6 +11,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import java.util.Date
+import java.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import com.google.firebase.Timestamp
+import kotlin.time.Duration.Companion.milliseconds
+
+
 
 class Database(
     private val store: FirebaseFirestore = Firebase.firestore
@@ -43,7 +49,7 @@ class Database(
 
     fun addRoom(room: Room) {
 
-        val doc = rooms.document() // ID auto-généré
+        val doc = rooms.document()
 
         val data = hashMapOf(
             "name" to room.name,
@@ -56,11 +62,18 @@ class Database(
                     "name" to it.name,
                     "isDone" to it.isDone
                 )
-            }
+            },
+            "timer" to mapOf(
+                "state" to room.timer.state.name,
+                "startTime" to room.timer.startTime,
+                "durationMs" to room.timer.durationMs,
+                "remainingMs" to room.timer.remainingMs
+            )
         )
 
         doc.set(data)
     }
+
 
     fun getJalonsOfRoom(roomId: String, onResult: (List<Jalon>) -> Unit) {
 //        rooms.document(roomId).collection("jalons").get()
@@ -132,6 +145,7 @@ class Database(
                 val description = doc.getString("description") ?: ""
                 val status = (doc.getLong("status") ?: 0L).toInt()
                 val members = doc.get("members") as? List<String> ?: emptyList()
+
                 val jalons = (doc.get("jalons") as? List<Map<String, Any>>)
                     ?.map { map ->
                         Jalon(
@@ -140,6 +154,29 @@ class Database(
                         )
                     } ?: emptyList()
 
+                // ---------- TIMER ----------
+                val timerMap = doc.get("timer") as? Map<String, Any>
+                val timer = if (timerMap != null) {
+
+                    val stateString = timerMap["state"] as? String ?: "NONE"
+                    val state = TimerState.valueOf(stateString)
+
+                    val startTimestamp = timerMap["startTime"] as? com.google.firebase.Timestamp
+                    val startDate = startTimestamp?.toDate() ?: Date(0)
+
+                    val durationMs = (timerMap["durationMs"] as? Long) ?: 0L
+                    val remainingMs = (timerMap["remainingMs"] as? Long) ?: 0L
+
+                    Timer(
+                        state = state,
+                        startTime = startDate,
+                        durationMs = durationMs,
+                        remainingMs = remainingMs
+                    )
+                } else {
+                    Timer()
+                }
+
                 Room(
                     id = id,
                     name = name,
@@ -147,7 +184,8 @@ class Database(
                     description = description,
                     status = status,
                     members = members,
-                    jalons = jalons
+                    jalons = jalons,
+                    timer = timer
                 )
             }.orEmpty()
 
@@ -156,6 +194,7 @@ class Database(
 
         awaitClose { registration.remove() }
     }
+
 
 
 
@@ -169,11 +208,13 @@ class Database(
             }
 
             if (snap != null && snap.exists()) {
+
                 val name = snap.getString("name") ?: ""
                 val owner = snap.getString("owner") ?: ""
                 val description = snap.getString("description") ?: ""
                 val status = (snap.getLong("status") ?: 0L).toInt()
                 val members = snap.get("members") as? List<String> ?: emptyList()
+
                 val jalons = (snap.get("jalons") as? List<Map<String, Any>>)
                     ?.map { map ->
                         Jalon(
@@ -181,6 +222,29 @@ class Database(
                             isDone = map["isDone"] as? Boolean ?: false
                         )
                     } ?: emptyList()
+
+                // ---------- TIMER ----------
+                val timerMap = snap.get("timer") as? Map<String, Any>
+                val timer = if (timerMap != null) {
+
+                    val stateString = timerMap["state"] as? String ?: "NONE"
+                    val state = TimerState.valueOf(stateString)
+
+                    val startTimestamp = timerMap["startTime"] as? com.google.firebase.Timestamp
+                    val startDate = startTimestamp?.toDate() ?: Date(0)
+
+                    val durationMs = (timerMap["durationMs"] as? Long) ?: 0L
+                    val remainingMs = (timerMap["remainingMs"] as? Long) ?: 0L
+
+                    Timer(
+                        state = state,
+                        startTime = startDate,
+                        durationMs = durationMs,
+                        remainingMs = remainingMs
+                    )
+                } else {
+                    Timer()
+                }
 
                 trySend(
                     Room(
@@ -190,9 +254,11 @@ class Database(
                         description = description,
                         status = status,
                         members = members,
-                        jalons = jalons
+                        jalons = jalons,
+                        timer = timer
                     )
                 )
+
             } else {
                 trySend(null)
             }
@@ -200,6 +266,8 @@ class Database(
 
         awaitClose { registration.remove() }
     }
+
+
 
 
 
@@ -304,4 +372,61 @@ class Database(
         val snapshot = getDocumentSnapshot("Users",uid)
         return snapshot?.getLong("exp")?.toInt() ?: 0
     }
+
+    suspend fun startTimer(roomId: String, duration: Duration) {
+        val d = duration.toMillis()
+        val timer = mapOf(
+            "state" to "RUNNING",
+            "startTime" to Date(),
+            "durationMs" to d,
+            "remainingMs" to d
+        )
+        rooms.document(roomId).update("timer", timer).await()
+    }
+
+
+    suspend fun pauseTimer(roomId: String, timer: Timer) {
+        val now = Date().time
+        val elapsed = now - timer.startTime.time
+        val remaining = (timer.durationMs - elapsed).coerceAtLeast(0L)
+
+        val newTimer = mapOf(
+            "state" to "PAUSED",
+            "startTime" to Date(0),
+            "durationMs" to timer.durationMs,
+            "remainingMs" to remaining
+        )
+
+        rooms.document(roomId).update("timer", newTimer).await()
+    }
+
+
+
+    suspend fun resumeTimer(roomId: String, timer: Timer) {
+        val rem = timer.remainingMs.coerceAtLeast(0L)
+
+        val newTimer = mapOf(
+            "state" to "RUNNING",
+            "startTime" to Date(),           // nouvelle référence
+            "durationMs" to rem,             // durée totale remise à remaining
+            "remainingMs" to rem
+        )
+
+        rooms.document(roomId).update("timer", newTimer).await()
+    }
+
+
+    suspend fun stopTimer(roomId: String) {
+        val newTimer = mapOf(
+            "state" to "NONE",
+            "startTime" to Date(0),
+            "durationMs" to 0L,
+            "remainingMs" to 0L
+        )
+
+        rooms.document(roomId).update("timer", newTimer).await()
+    }
+
+
+
 }

@@ -1,5 +1,6 @@
 package com.example.focusparty.view
 
+import android.widget.NumberPicker
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -23,8 +24,23 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.filled.Pause
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.delay
+import java.time.Duration
+import kotlin.properties.ReadOnlyProperty
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.unit.dp
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import com.example.focusparty.model.TimerState
+
 
 @Composable
 fun RoomScreen(
@@ -50,6 +66,10 @@ fun RoomContent(
     Column {
         SalonTopBar(vm)
         DashBoard(vm)
+        Pomodoro(
+            vm=vm,
+            room=room
+        )
         ActionsMenu(vm)
     }
 }
@@ -111,10 +131,6 @@ fun SalonTopBar(vm: RoomViewModel) {
 
 @Composable
 fun ActionsMenu(vm: RoomViewModel) {
-}
-
-@Composable
-fun DashBoard(vm: RoomViewModel) {
     Column(){
         RoomStats(vm)
         LazyColumn() {
@@ -127,6 +143,11 @@ fun DashBoard(vm: RoomViewModel) {
             }
         }
     }
+}
+
+@Composable
+fun DashBoard(vm: RoomViewModel) {
+
 
 
 }
@@ -134,18 +155,6 @@ fun DashBoard(vm: RoomViewModel) {
 @Composable
 fun RoomStats(vm: RoomViewModel) {
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 @Composable
 fun JalonItem(
@@ -164,4 +173,200 @@ fun JalonItem(
         Text(text=jalon.name+"/"+jalon.isDone.toString())
     }
 }
+
+@Composable
+fun Pomodoro(
+    vm: RoomViewModel,
+    room: Room
+) {
+    val remaining by vm.remaining.collectAsState()
+    val timer = room.timer
+    val state = timer.state
+
+    // ---------------------------------------------------------
+    // A. Aucun timer (state = NONE)
+    // ---------------------------------------------------------
+    if (state == TimerState.NONE) {
+
+        var hours by remember { mutableStateOf(0) }
+        var minutes by remember { mutableStateOf(25) }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Box (
+                modifier=Modifier.weight(1f)
+            ) {
+                NumberPicker(
+                    label = "Heures",
+                    value = hours,
+                    range = 0..5
+                ) {
+                    hours = it
+                }
+            }
+            Box (
+                modifier=Modifier.weight(1f)
+            ) {
+                NumberPicker(label = "Minutes", value = minutes, range = 0..59) {
+                    minutes = it
+                }
+            }
+            Box (
+                modifier=Modifier.weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+                Button(
+                    onClick = {
+                        val totalMinutes = hours * 60 + minutes
+                        val duration = Duration.ofMinutes(totalMinutes.toLong())
+                        vm.startPomodoro(duration)
+                    }
+                ) {
+                    Text("Lancer")
+                }
+            }
+        }
+        return
+    }
+
+    // ---------------------------------------------------------
+    // Préparation valeurs communes RUNNING / PAUSED
+    // ---------------------------------------------------------
+    val totalMs = timer.durationMs
+    val remainingMs = remaining.toMillis()
+    val doneMs = (totalMs - remainingMs).coerceAtLeast(0L)
+    val progress = (doneMs.toFloat() / totalMs.toFloat()).coerceIn(0f, 1f)
+
+
+    val m = remaining.toMinutes()
+    val s = remaining.toSeconds() % 60
+
+    // ---------------------------------------------------------
+    // B. Timer en pause (state = PAUSED)
+    // ---------------------------------------------------------
+    if (state == TimerState.PAUSED) {
+
+        Column(
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+
+            LinearProgressIndicator(
+                progress = progress,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Text(
+                text = "%02d:%02d".format(m, s),
+                style = MaterialTheme.typography.headlineMedium
+            )
+
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                Button(onClick = { vm.resumePomodoro() }) {
+                    Text("Reprendre")
+                }
+                Button(onClick = { vm.stopPomodoro() }) {
+                    Text("Arrêter")
+                }
+            }
+        }
+        return
+    }
+
+    // ---------------------------------------------------------
+    // C. Timer en cours (state = RUNNING)
+    // ---------------------------------------------------------
+    if (state == TimerState.RUNNING) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+
+            LinearProgressIndicator(
+                progress = progress,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Text(
+                text = "%02d:%02d".format(m, s),
+                style = MaterialTheme.typography.headlineMedium
+            )
+
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                Button(onClick = { vm.pausePomodoro() }) {
+                    Text("Pause")
+                }
+                Button(onClick = { vm.stopPomodoro() }) {
+                    Text("Arrêter")
+                }
+            }
+        }
+
+    }
+}
+
+
+@Composable
+fun NumberPicker(
+    label: String,
+    value: Int,
+    range: IntRange,
+    onValueChange: (Int) -> Unit
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+
+        Text(label, style = MaterialTheme.typography.bodyMedium)
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+
+            IconButton(
+                onClick = {
+                    val new = (value - 1).coerceIn(range)
+                    onValueChange(new)
+                }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowDown,
+                    contentDescription = null
+                )
+            }
+
+            Text(
+                text = value.toString(),
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+
+            IconButton(
+                onClick = {
+                    val new = (value + 1).coerceIn(range)
+                    onValueChange(new)
+                }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowUp,
+                    contentDescription = null
+                )
+            }
+        }
+    }
+}
+
+
+
 

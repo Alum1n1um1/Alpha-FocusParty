@@ -83,6 +83,13 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     // Navigation
     implementation("androidx.navigation:navigation-compose")
+    testImplementation(kotlin("test"))
+    // tests
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("androidx.test:core:1.5.0")
+    testImplementation("org.jetbrains.kotlin:kotlin-test:1.9.22")
+
+
 
 
 }
