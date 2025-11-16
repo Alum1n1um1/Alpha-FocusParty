@@ -32,7 +32,7 @@ fun RoomScreen(
 }
 
 @Composable
-fun ActionsMenu(x0: RoomViewModel) {
+fun ActionsMenu(vm: RoomViewModel) {
 }
 
 @Composable
