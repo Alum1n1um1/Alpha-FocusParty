@@ -39,6 +39,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.SettingsSuggest
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.ui.graphics.vector.ImageVector
 import com.example.focusparty.model.TimerState
 
 
@@ -169,8 +172,35 @@ fun JalonItem(
             .height(48.dp)
             .padding(horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(text=jalon.name+"/"+jalon.isDone.toString())
+    )
+    {
+        Box(Modifier.weight(2f), Alignment.CenterStart)
+        {
+            Text(text=jalon.name+"/"+jalon.isDone.toString())
+        }
+        Box(Modifier.weight(2f), Alignment.Center)
+        {
+            if(jalon.isDone)
+            {
+                Text("Terminé")
+            }
+            else
+            {
+                Button({})
+                {
+                    Text("Terminer")
+                }
+            }
+        }
+        Box(Modifier.weight(1f), Alignment.CenterEnd)
+        {
+            IconButton(
+                {}
+            )
+            {
+                Icon(Icons.Default.SettingsSuggest, "Paramètre du jalon")
+            }
+        }
     }
 }
 
