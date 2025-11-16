@@ -19,8 +19,8 @@ class RoomViewModel(
 
     init {
         viewModelScope.launch {
-            db.getRoomById(roomId).collect { r ->
-                room.value = r
+            db.getRoomById(roomId).collect { fetchedRoom  ->
+                room.value = fetchedRoom
             }
         }
     }

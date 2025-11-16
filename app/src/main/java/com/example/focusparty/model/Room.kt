@@ -1,6 +1,7 @@
 package com.example.focusparty.model
 
 data class Room(
+    val id:String="",
     val name:String,
     val owner:String,
     val description:String,

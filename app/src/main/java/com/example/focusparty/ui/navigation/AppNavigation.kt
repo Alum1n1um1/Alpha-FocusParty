@@ -57,7 +57,7 @@ fun AppNavigation(
         }
 
         composable(
-            route = "Room/{RoomID}",
+            route = "Room/{roomId}",
             arguments = listOf(
                 navArgument("roomId") { type = NavType.StringType }
             )

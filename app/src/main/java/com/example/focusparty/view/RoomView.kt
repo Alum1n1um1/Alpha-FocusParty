@@ -23,15 +23,32 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.filled.Pause
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 
 @Composable
 fun RoomScreen(
     vm: RoomViewModel
 ) {
-    val room : Room = vm.getCurrentRoom()
+    val room by vm.room.collectAsState()
 
+    if (room == null) {
+        Text("Chargement du salon…")
+    } else {
+        RoomContent(
+            vm=vm,
+            room = room!!
+        )
+    }
+}
+
+@Composable
+fun RoomContent(
+    vm: RoomViewModel,
+    room: Room)
+{
     Column {
-        TopRoomBar(vm)
+        SalonTopBar(vm)
         DashBoard(vm)
         ActionsMenu(vm)
 
@@ -39,94 +56,6 @@ fun RoomScreen(
 
 
 }
-
-@Composable
-fun ActionsMenu(vm: RoomViewModel) {
-}
-
-@Composable
-fun DashBoard(vm: RoomViewModel) {
-    Column(){
-        RoomStats(vm)
-        LazyColumn() {
-            items(items=vm.getCurrentRoom().jalons) { jalon ->
-                JalonItem(
-                    jalon=jalon,
-                    onFinish={},
-                    onSettings={}
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun RoomStats(vm: RoomViewModel) {
-}
-
-@Composable
-fun TopRoomBar(vm: RoomViewModel) {
-
-}
-
-
-
-
-
-
-
-
-
-
-
-
-@Composable
-fun JalonItem(
-    jalon: Jalon,
-    onFinish: () -> Unit,
-    onSettings: () -> Unit
-) {
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(48.dp)
-            .padding(horizontal = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(text=jalon.name+"/"+jalon.id)
-    }
-}
-
-
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-
-@Composable
-fun RoomScreen(vm: RoomViewModel, navController: NavHostController)
-{
-    Column(Modifier
-        .fillMaxSize()
-        .background(MaterialTheme.colorScheme.background))
-    {
-        SalonTopBar(vm)
-        Text("Todo")
-    }
-}
-
 @Composable
 fun SalonTopBar(vm: RoomViewModel) {
 
@@ -182,3 +111,57 @@ fun SalonTopBar(vm: RoomViewModel) {
         }
     }
 }
+@Composable
+fun ActionsMenu(vm: RoomViewModel) {
+}
+
+@Composable
+fun DashBoard(vm: RoomViewModel) {
+    Column(){
+        RoomStats(vm)
+        LazyColumn() {
+            items(items=vm.getCurrentRoom().jalons) { jalon ->
+                JalonItem(
+                    jalon=jalon,
+                    onFinish={},
+                    onSettings={}
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun RoomStats(vm: RoomViewModel) {
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+@Composable
+fun JalonItem(
+    jalon: Jalon,
+    onFinish: () -> Unit,
+    onSettings: () -> Unit
+) {
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(48.dp)
+            .padding(horizontal = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(text=jalon.name+"/"+jalon.isDone.toString())
+    }
+}
+

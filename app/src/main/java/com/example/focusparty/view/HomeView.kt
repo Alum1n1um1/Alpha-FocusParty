@@ -21,6 +21,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.focusparty.model.Event
+import com.example.focusparty.model.Jalon
 import com.example.focusparty.model.Room
 import com.example.focusparty.viewmodel.HomeViewModel
 import java.time.LocalDate
@@ -284,7 +285,7 @@ fun AddRoomButton(onClick: () -> Unit) {
 @Composable
 fun CreateRoomDialog(
     onDismiss: () -> Unit,
-    onConfirm: (String, String, List<String>) -> Unit
+    onConfirm: (String, String, List<Jalon>) -> Unit
 ) {
     var name by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
@@ -322,6 +323,10 @@ fun CreateRoomDialog(
                         .split(",")
                         .map { it.trim() }
                         .filter { it.isNotEmpty() }
+                        .map { Jalon(
+                            name = it,
+                            isDone = false
+                            ) }
 
                     onConfirm(name, description, jalons)
                 }

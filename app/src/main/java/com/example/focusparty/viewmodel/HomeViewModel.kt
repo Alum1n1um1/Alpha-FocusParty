@@ -36,8 +36,8 @@ class HomeViewModel(
     fun ShareApp(){
     }
 
-    fun GoToRoom(room: Room){
-        navController.navigate("room")
+    fun GoToRoom(room:Room){
+        navController.navigate("room/"+room.id)
     }
 
     fun loadAvailablePoints() {
@@ -58,7 +58,7 @@ class HomeViewModel(
         }
     }
 
-    fun createRoom(name: String, description: String, jalons: List<String>) {
+    fun createRoom(name: String, description: String, jalons: List<Jalon>) {
         val uid = auth.currentUser?.uid ?: return
 
         val newRoom = Room(
