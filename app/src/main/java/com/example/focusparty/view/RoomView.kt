@@ -34,6 +34,7 @@ import kotlinx.coroutines.delay
 import java.time.Duration
 import kotlin.properties.ReadOnlyProperty
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.filled.CoPresent
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -97,7 +98,7 @@ fun SalonTopBar(vm: RoomViewModel, room: Room) {
                 contentAlignment = Alignment.CenterStart
             )
             {
-                Text(room.name)
+                Text("")
             }
 
             // --- Zone centrale ---
@@ -106,19 +107,7 @@ fun SalonTopBar(vm: RoomViewModel, room: Room) {
                 contentAlignment = Alignment.Center
             )
             {
-                Row()
-                {
-                    Text(room.status.toString())
-//                    IconButton(
-//                        {},
-//                        colors = IconButtonDefaults.iconButtonColors(
-//                            contentColor = MaterialTheme.colorScheme.onPrimary
-//                        )
-//                    )
-//                    {
-//                        Icon(Icons.Default.Pause, "Changer le statut")
-//                    }
-                }
+                Text(room.name)
             }
 
             // --- Zone droite ---
@@ -127,7 +116,7 @@ fun SalonTopBar(vm: RoomViewModel, room: Room) {
                 contentAlignment = Alignment.CenterEnd
             )
             {
-                Text("Personnes connectées")
+                Text("1")
                 Icon(Icons.Default.CoPresent, "Nombre de personnes connectés")
             }
         }
@@ -139,11 +128,10 @@ fun ActionsMenu(vm: RoomViewModel) {
     Column(){
         RoomStats(vm)
         LazyColumn() {
-            items(items=vm.getCurrentRoom().jalons) { jalon ->
+            itemsIndexed(items=vm.getCurrentRoom().jalons) { index, jalon ->
                 JalonItem(
-                    vm,
                     jalon=jalon,
-                    onFinish={},
+                    onFinish={vm.endJalon(index, jalon)},
                     onSettings={}
                 )
             }
@@ -164,7 +152,6 @@ fun RoomStats(vm: RoomViewModel) {
 
 @Composable
 fun JalonItem(
-    vm: RoomViewModel,
     jalon: Jalon,
     onFinish: () -> Unit,
     onSettings: () -> Unit
@@ -190,7 +177,7 @@ fun JalonItem(
             }
             else
             {
-                Button({vm.endJalon(jalon)})
+                Button(onFinish)
                 {
                     Text("Terminer")
                 }
