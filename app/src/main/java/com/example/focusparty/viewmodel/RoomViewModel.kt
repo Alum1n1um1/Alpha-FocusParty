@@ -115,6 +115,11 @@ class RoomViewModel(
         db.resumeTimer(roomId, timer)
     }
 
+    fun endJalon(jalon: Jalon) = viewModelScope
+        .launch{
+        db.jalonIsDone(roomId, jalon)
+    }
+
 
 
 

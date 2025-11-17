@@ -427,6 +427,9 @@ class Database(
         rooms.document(roomId).update("timer", newTimer).await()
     }
 
-
+    suspend fun jalonIsDone(roomId: String, jalon: Jalon)
+    {
+        val updatedJalon = Jalon(jalon.name, true)
+    }
 
 }

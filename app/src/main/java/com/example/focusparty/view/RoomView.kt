@@ -34,6 +34,7 @@ import kotlinx.coroutines.delay
 import java.time.Duration
 import kotlin.properties.ReadOnlyProperty
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.filled.CoPresent
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.unit.dp
@@ -67,7 +68,7 @@ fun RoomContent(
     room: Room)
 {
     Column {
-        SalonTopBar(vm)
+        SalonTopBar(vm, room)
         DashBoard(vm)
         Pomodoro(
             vm=vm,
@@ -77,7 +78,7 @@ fun RoomContent(
     }
 }
 @Composable
-fun SalonTopBar(vm: RoomViewModel) {
+fun SalonTopBar(vm: RoomViewModel, room: Room) {
 
     Surface()
     {
@@ -96,7 +97,7 @@ fun SalonTopBar(vm: RoomViewModel) {
                 contentAlignment = Alignment.CenterStart
             )
             {
-                Text("Nom du salon")
+                Text(room.name)
             }
 
             // --- Zone centrale ---
@@ -107,16 +108,16 @@ fun SalonTopBar(vm: RoomViewModel) {
             {
                 Row()
                 {
-                    Text("Statut du salon")
-                    IconButton(
-                        {},
-                        colors = IconButtonDefaults.iconButtonColors(
-                            contentColor = MaterialTheme.colorScheme.onPrimary
-                        )
-                    )
-                    {
-                        Icon(Icons.Default.Pause, "Changer le statut")
-                    }
+                    Text(room.status.toString())
+//                    IconButton(
+//                        {},
+//                        colors = IconButtonDefaults.iconButtonColors(
+//                            contentColor = MaterialTheme.colorScheme.onPrimary
+//                        )
+//                    )
+//                    {
+//                        Icon(Icons.Default.Pause, "Changer le statut")
+//                    }
                 }
             }
 
@@ -127,6 +128,7 @@ fun SalonTopBar(vm: RoomViewModel) {
             )
             {
                 Text("Personnes connectées")
+                Icon(Icons.Default.CoPresent, "Nombre de personnes connectés")
             }
         }
     }
@@ -139,6 +141,7 @@ fun ActionsMenu(vm: RoomViewModel) {
         LazyColumn() {
             items(items=vm.getCurrentRoom().jalons) { jalon ->
                 JalonItem(
+                    vm,
                     jalon=jalon,
                     onFinish={},
                     onSettings={}
@@ -161,6 +164,7 @@ fun RoomStats(vm: RoomViewModel) {
 
 @Composable
 fun JalonItem(
+    vm: RoomViewModel,
     jalon: Jalon,
     onFinish: () -> Unit,
     onSettings: () -> Unit
@@ -186,7 +190,7 @@ fun JalonItem(
             }
             else
             {
-                Button({})
+                Button({vm.endJalon(jalon)})
                 {
                     Text("Terminer")
                 }
