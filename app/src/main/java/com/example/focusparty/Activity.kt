@@ -18,7 +18,7 @@ class Activity : ComponentActivity() {
         setContent {
             val navController = rememberNavController()
 
-            AppTheme {
+            AppTheme { ///////////////////////////// UTILISER FIGMA (modele pour générer des thèmes) // voir aussi material d(esign)
                 AppNavigation(
                     navController = navController,
                     db = db

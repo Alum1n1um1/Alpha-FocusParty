@@ -32,7 +32,7 @@ fun AppNavigation(
 ) {
     NavHost(
         navController = navController,
-        startDestination = "Login"
+        startDestination = "Home"
     ) {
         // Ici on rajoute les différentes pages
 

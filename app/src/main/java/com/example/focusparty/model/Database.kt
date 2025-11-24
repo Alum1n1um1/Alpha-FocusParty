@@ -74,61 +74,6 @@ class Database(
         doc.set(data)
     }
 
-
-    fun getJalonsOfRoom(roomId: String, onResult: (List<Jalon>) -> Unit) {
-//        rooms.document(roomId).collection("jalons").get()
-//            .addOnSuccessListener { result ->
-//                val jalons = result.map { doc ->
-//                    Jalon(
-//                        name = doc.getString("name") ?: "NameNotFound",
-//                        isDone = doc.getBoolean("isDone") ?: false
-//                    )
-//                }
-//                onResult(jalons)
-//            }
-    }
-
-
-    fun getRooms(): Flow<List<Room>> = callbackFlow {
-//        val col = store.collection("rooms")
-//        val reg = col.addSnapshotListener { snap, err ->
-//            if (err != null) {
-//                trySend(emptyList())
-//                return@addSnapshotListener
-//            }
-//
-//            val list = snap?.documents?.mapNotNull { doc ->
-//                val id = doc.id
-//                val name = doc.getString("name") ?: ""
-//                val owner = doc.getString("owner") ?: ""
-//                val description = doc.getString("description") ?: ""
-//                val status = (doc.getLong("status") ?: 0L).toInt()
-//                val members = doc.get("members") as? List<String> ?: emptyList()
-//                val jalons = (doc.get("jalons") as? List<Map<String, Any>>)
-//                    ?.map { map ->
-//                        Jalon(
-//                            name = map["name"] as? String ?: "",
-//                            isDone = map["isDone"] as? Boolean ?: false
-//                        )
-//                    } ?: emptyList()
-//
-//                Room(
-//                    id = id,
-//                    name = name,
-//                    owner = owner,
-//                    description = description,
-//                    status = status,
-//                    members = members,
-//                    jalons = jalons
-//                )
-//            }.orEmpty()
-//
-//            trySend(list)
-//        }
-//        awaitClose { reg.remove() }
-    }
-
-
     fun getRoomsOf(uid: String): Flow<List<Room>> = callbackFlow {
         val query = store.collection("rooms").whereArrayContains("members", uid)
 
@@ -194,9 +139,6 @@ class Database(
 
         awaitClose { registration.remove() }
     }
-
-
-
 
     fun getRoomById(roomId: String): Flow<Room?> = callbackFlow {
         val docRef = store.collection("rooms").document(roomId)
@@ -267,10 +209,6 @@ class Database(
         awaitClose { registration.remove() }
     }
 
-
-
-
-
     fun getUsers() { // Récupère tous les utilisateurs
         // TODO
     }
@@ -334,7 +272,6 @@ class Database(
         awaitClose { registration.remove() }
     }
 
-
     fun getFriends(user:String) { // Récupère les amis de l'utilisateur
         TODO()
     }
@@ -384,7 +321,6 @@ class Database(
         rooms.document(roomId).update("timer", timer).await()
     }
 
-
     suspend fun pauseTimer(roomId: String, timer: Timer) {
         val now = Date().time
         val elapsed = now - timer.startTime.time
@@ -400,8 +336,6 @@ class Database(
         rooms.document(roomId).update("timer", newTimer).await()
     }
 
-
-
     suspend fun resumeTimer(roomId: String, timer: Timer) {
         val rem = timer.remainingMs.coerceAtLeast(0L)
 
@@ -414,7 +348,6 @@ class Database(
 
         rooms.document(roomId).update("timer", newTimer).await()
     }
-
 
     suspend fun stopTimer(roomId: String) {
         val newTimer = mapOf(
@@ -431,5 +364,98 @@ class Database(
     {
         val updatedJalon = Jalon(jalon.name, true)
     }
+
+    suspend fun addExpToUser(uid: String, exp: Long): Pair<Int, Int> {
+
+        val userRef = users.document(uid)
+
+        return store.runTransaction { tx ->
+
+            val snap = tx.get(userRef)
+
+            var currentExp = (snap.getLong("exp") ?: 0L).toInt()
+            var currentLevel = (snap.getLong("level") ?: 1L).toInt()
+            var currentPoints = (snap.getLong("points") ?: 1L).toInt()
+
+            // Ajout des points gagnés
+            currentExp += exp.toInt()
+
+            var levelsAugment = 0
+
+            // Boucle de montée de niveau
+            while (true) {
+                val required = 50 * currentLevel
+
+                if (currentExp >= required) {
+                    currentExp -= required
+                    levelsAugment += 1
+                } else {
+                    break
+                }
+            }
+
+            tx.update(userRef, mapOf(
+                "exp" to currentExp,
+                "level" to currentLevel+levelsAugment,
+                "points" to currentPoints+levelsAugment*100
+            ))
+
+            Pair(currentLevel, currentExp)
+        }.await()
+    }
+
+
+    fun getJalonsOfRoom(roomId: String, onResult: (List<Jalon>) -> Unit) {
+//        rooms.document(roomId).collection("jalons").get()
+//            .addOnSuccessListener { result ->
+//                val jalons = result.map { doc ->
+//                    Jalon(
+//                        name = doc.getString("name") ?: "NameNotFound",
+//                        isDone = doc.getBoolean("isDone") ?: false
+//                    )
+//                }
+//                onResult(jalons)
+//            }
+    }
+
+    fun getRooms(): Flow<List<Room>> = callbackFlow {
+//        val col = store.collection("rooms")
+//        val reg = col.addSnapshotListener { snap, err ->
+//            if (err != null) {
+//                trySend(emptyList())
+//                return@addSnapshotListener
+//            }
+//
+//            val list = snap?.documents?.mapNotNull { doc ->
+//                val id = doc.id
+//                val name = doc.getString("name") ?: ""
+//                val owner = doc.getString("owner") ?: ""
+//                val description = doc.getString("description") ?: ""
+//                val status = (doc.getLong("status") ?: 0L).toInt()
+//                val members = doc.get("members") as? List<String> ?: emptyList()
+//                val jalons = (doc.get("jalons") as? List<Map<String, Any>>)
+//                    ?.map { map ->
+//                        Jalon(
+//                            name = map["name"] as? String ?: "",
+//                            isDone = map["isDone"] as? Boolean ?: false
+//                        )
+//                    } ?: emptyList()
+//
+//                Room(
+//                    id = id,
+//                    name = name,
+//                    owner = owner,
+//                    description = description,
+//                    status = status,
+//                    members = members,
+//                    jalons = jalons
+//                )
+//            }.orEmpty()
+//
+//            trySend(list)
+//        }
+//        awaitClose { reg.remove() }
+    }
+
 
 }

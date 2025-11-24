@@ -210,7 +210,7 @@ fun Pomodoro(
     if (state == TimerState.NONE) {
 
         var hours by remember { mutableStateOf(0) }
-        var minutes by remember { mutableStateOf(25) }
+        var minutes by remember { mutableStateOf(1) } /////////////////////CHANGER POUR 25
 
         Row(
             modifier = Modifier

@@ -1,5 +1,6 @@
 package com.example.focusparty.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
@@ -34,10 +35,21 @@ class RoomViewModel(
     val remaining: StateFlow<Duration> = _remaining.asStateFlow()
 
     private var countdownJob: Job? = null
+    private var lastTimer: Timer? = null
+
+    private var workedMs : Duration = Duration.ZERO
+
 
     init {
         viewModelScope.launch {
             db.getRoomById(roomId).collect { fetchedRoom  ->
+                val old = lastTimer
+                val new = fetchedRoom?.timer
+
+                if (old != null && new != null) {
+                    detectTimerEvents(old, new)
+                }
+                lastTimer = new
                 room.value = fetchedRoom
             }
         }
@@ -82,6 +94,11 @@ class RoomViewModel(
                                 _remaining.value =
                                     Duration.ofMillis(remaining.coerceAtLeast(0L))
 
+                                if (remaining <= 0L) {
+                                    stopPomodoro()
+                                    break
+                                }
+
                                 delay(250)
                             }
                         }
@@ -98,19 +115,23 @@ class RoomViewModel(
     }
 
     fun startPomodoro(duration: Duration) = viewModelScope.launch {
+        Log.w("DEBUG","")
         db.startTimer(roomId, duration)
     }
 
     fun stopPomodoro() = viewModelScope.launch {
+        Log.w("DEBUG","")
         db.stopTimer(roomId)
     }
 
     fun pausePomodoro() = viewModelScope.launch {
+        Log.w("DEBUG","")
         val timer = roomState.value?.timer ?: return@launch
         db.pauseTimer(roomId, timer)
     }
 
     fun resumePomodoro() = viewModelScope.launch {
+        Log.w("DEBUG","resumePomodoro")
         val timer = roomState.value?.timer ?: return@launch
         db.resumeTimer(roomId, timer)
     }
@@ -122,6 +143,55 @@ class RoomViewModel(
 
 
 
+    private fun detectTimerEvents(old: Timer, new: Timer) {
+        Log.w("DEBUG","detectTimerEvents")
+
+        // Cas où on quitte RUNNING → accumuler le temps écoulé
+        if (old.state == TimerState.RUNNING &&
+            (new.state == TimerState.PAUSED || new.state == TimerState.NONE)) {
+
+            val now = System.currentTimeMillis()
+            val elapsed = now - old.startTime.time
+            workedMs = workedMs + Duration.ofMillis(elapsed)
+
+            onTimerPaused()
+        }
+
+        // Cas reprise : ne rien accumuler
+        if (old.state == TimerState.PAUSED && new.state == TimerState.RUNNING) {
+            onTimerResumed()
+        }
+
+        // Cas fin timer : appeler la fin, mais ne rien accumuler ici
+        if ((old.remainingMs > 0 && new.remainingMs == 0L) ||
+            (new.state == TimerState.NONE && old.remainingMs > 0)) {
+
+            onTimerFinishedInternal()
+        }
+
+    }
+
+    private fun onTimerPaused() {
+        Log.w("DEBUG","server timer paused")
+    }
+
+    private fun onTimerResumed() {
+        Log.w("DEBUG","server timer resumed")
+    }
+
+    private fun onTimerFinishedInternal() {
+        Log.w("DEBUG","onTimerFinishedInternal")
+        onPomodoroFinished(workedMs.toMillis())
+    }
+
+    fun onPomodoroFinished(durationMs: Long) {
+        viewModelScope.launch {
+            val exp = 2500 * durationMs / 1000 / 60 / 30    // 2500 exp par 30 minutes
+            Log.w("DEBUG","onPomodoroFinished,  exp = "+exp.toString())
+            db.addExpToUser(uid, exp)
+        }
+        workedMs = Duration.ZERO
+    }
 
 
 }
