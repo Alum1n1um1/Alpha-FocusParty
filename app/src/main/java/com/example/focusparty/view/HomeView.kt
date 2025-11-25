@@ -23,6 +23,9 @@ import androidx.navigation.NavHostController
 import com.example.focusparty.model.Event
 import com.example.focusparty.model.Jalon
 import com.example.focusparty.model.Room
+import com.example.focusparty.ui.components.CustomSurface
+import com.example.focusparty.ui.components.SurfaceLevel
+import com.example.focusparty.ui.theme.AppTheme
 import com.example.focusparty.viewmodel.HomeViewModel
 import java.time.LocalDate
 import java.time.ZoneId
@@ -48,7 +51,7 @@ fun HomeScreen(vm: HomeViewModel, navController: NavHostController) {
                 color = MaterialTheme.colorScheme.secondary,
                 modifier = Modifier
                     .fillMaxWidth(0.65f)
-                    .weight(1f)
+                    .align(Alignment.CenterHorizontally)
             )
 
             Box(modifier = Modifier.weight(2f)) {
@@ -59,7 +62,7 @@ fun HomeScreen(vm: HomeViewModel, navController: NavHostController) {
                 color = MaterialTheme.colorScheme.secondary,
                 modifier = Modifier
                     .fillMaxWidth(0.65f)
-                    .weight(1f)
+                    .align(Alignment.CenterHorizontally)
             )
 
             Box(modifier = Modifier.weight(2f)) {
@@ -73,12 +76,13 @@ fun HomeScreen(vm: HomeViewModel, navController: NavHostController) {
 @Composable
 fun HomeTopBar(vm: HomeViewModel) {
 
-    Surface(){
+    Surface(
+        color = MaterialTheme.colorScheme.primary
+    ){
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .windowInsetsPadding(WindowInsets.statusBars)
-                .background(MaterialTheme.colorScheme.primary),
+                .windowInsetsPadding(WindowInsets.statusBars),
             verticalAlignment = Alignment.CenterVertically
         ) {
 
@@ -105,7 +109,8 @@ fun HomeTopBar(vm: HomeViewModel) {
                 val date = LocalDate.now()
                 val formatter = DateTimeFormatter.ofPattern("dd MMM yyyy")
                 Text(
-                    text = date.format(formatter)
+                    text = date.format(formatter),
+                    color = MaterialTheme.colorScheme.onPrimary,
                 )
             }
 
@@ -155,7 +160,11 @@ fun Stats(vm: HomeViewModel){
     LaunchedEffect(Unit) {
         vm.loadAvailablePoints()
     }
-    Surface() {
+    CustomSurface(
+        level = SurfaceLevel.High,
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        modifier = Modifier.fillMaxSize()
+    ) {
         Row(
             modifier = Modifier.fillMaxSize()
         ) {
@@ -173,13 +182,14 @@ fun Stats(vm: HomeViewModel){
                     Text(
                         text = "LVL" + level.toString(),
                         modifier = Modifier.width(48.dp),
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
 
                     LinearProgressIndicator(
                         progress = { progress },
                         color = MaterialTheme.colorScheme.secondary,
-                        trackColor = ProgressIndicatorDefaults.linearTrackColor,
+                        trackColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                         strokeCap = ProgressIndicatorDefaults.LinearStrokeCap,
                         modifier = Modifier
                             .weight(1f)
@@ -189,7 +199,8 @@ fun Stats(vm: HomeViewModel){
                     Text(
                         text = "LVL" + (level + 1).toString(),
                         modifier = Modifier.width(48.dp),
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
                 Row(
@@ -198,7 +209,10 @@ fun Stats(vm: HomeViewModel){
                         .fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(text = "Points disponibles : " + points)
+                    Text(
+                        text = "Points disponibles : " + points,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
                 }
                 Row(
                     modifier = Modifier
@@ -213,8 +227,9 @@ fun Stats(vm: HomeViewModel){
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
+                    .background(MaterialTheme.colorScheme.surfaceContainerLow)
             ) {
-                // TODO le graphique du temps passé depuis 1sem
+
             }
         }
     }
@@ -236,16 +251,20 @@ fun RoomsSection(vm: HomeViewModel) {
         )
     }
 
-    Surface(color = MaterialTheme.colorScheme.surface) {
-        LazyColumn(modifier = Modifier.fillMaxSize()) {
-
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceContainerLow
+    ) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
             item {
                 AddRoomButton { showDialog = true }
             }
-
             items(rooms) { room ->
-                RoomItem(room,vm)
+                RoomItem(room, vm)
             }
+
         }
     }
 }
@@ -267,17 +286,13 @@ fun AddRoomButton(onClick: () -> Unit) {
                 contentColor = MaterialTheme.colorScheme.onSecondary
             )
         ) {
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = "Ajouter un salon"
+            )
+            Spacer(modifier = Modifier.width(8.dp))
             Text("Ajouter un salon")
         }
-
-        Spacer(modifier = Modifier.width(8.dp))
-
-        IconButton(
-            onClick = onClick
-        ) {
-            Icon(Icons.Default.Add, contentDescription = "Ajouter un salon")
-        }
-
     }
 }
 
@@ -294,6 +309,7 @@ fun CreateRoomDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Créer un salon") },
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
         text = {
             Column {
                 OutlinedTextField(
@@ -345,29 +361,53 @@ fun CreateRoomDialog(
 
 @Composable
 fun RoomItem(room:Room,vm: HomeViewModel){ // 1 salon, TODO : name + nombre de personnes dans le salon + lvl du salon (avec icone d'arbre)
-    Surface(
-        color = MaterialTheme.colorScheme.surface,
-        onClick =  { vm.GoToRoom(room) }
+
+    CustomSurface(
+        level = SurfaceLevel.High,
+        onClick =  { vm.GoToRoom(room) },
+        modifier = Modifier.fillMaxWidth()
     ){
         Row(
-
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ){
-            Text(text = room.name)
+            Text(
+                text = room.name,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier
+                    .weight(1f)              // prend tout l’espace libre
+                    .padding(start = 4.dp)   // pas collé
+            )
             Row (
-
+                modifier = Modifier
+                    .width(72.dp)            // largeur fixe
+                    .padding(end = 4.dp),    // pas collé au bord
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
             ){
                 Column(
-
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.padding(end = 8.dp)
                 ){
                     Icon(
                         Icons.Default.AccountCircle,
-                        contentDescription = "personnage"
+                        contentDescription = "logo personnage",
+                        tint = MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier.size(20.dp)
                     )
-                    Text(text="TODO") // TODO : nombre de personnes dans le salon
+                    Text(
+                        text="TODO",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.labelSmall
+                    ) // TODO : nombre de personnes dans le salon
                 }
                 Icon(
                     Icons.Default.Nature,
-                    contentDescription = "arbre ou plante"
+                    contentDescription = "arbre ou plante",
+                    tint = MaterialTheme.colorScheme.tertiary,
+                    modifier = Modifier.size(24.dp)
                 )
             }
         }
@@ -379,8 +419,8 @@ fun RoomItem(room:Room,vm: HomeViewModel){ // 1 salon, TODO : name + nombre de p
 @Composable
 fun EventSection(vm: HomeViewModel) {
     val events by vm.events.collectAsState()
-    Surface(
-        color = MaterialTheme.colorScheme.surfaceContainer,
+    CustomSurface(
+        level = SurfaceLevel.Normal
     ){
         LazyColumn {
             items(events) { event ->
@@ -393,8 +433,9 @@ fun EventSection(vm: HomeViewModel) {
 
 @Composable
 fun EventItem(event:Event){ // 1 event, TODO : name + deadline + priorité (urgence ?)
-    Surface(
-        color = MaterialTheme.colorScheme.surface,
+    CustomSurface(
+        level = SurfaceLevel.Normal,
+        color = if (event.priority != "URG") {MaterialTheme.colorScheme.surface} else {MaterialTheme.colorScheme.error},
     ){
         Row(){
             Box(
@@ -402,7 +443,7 @@ fun EventItem(event:Event){ // 1 event, TODO : name + deadline + priorité (urge
             ){
                 Text(
                     text=event.name,
-                    color=MaterialTheme.colorScheme.onSurface,
+                    color=if (event.priority != "URG") {MaterialTheme.colorScheme.onSurface} else {MaterialTheme.colorScheme.onError},
                     modifier = Modifier
                         .fillMaxWidth(),
                     textAlign = TextAlign.Center
@@ -418,7 +459,7 @@ fun EventItem(event:Event){ // 1 event, TODO : name + deadline + priorité (urge
                         .atZone(ZoneId.systemDefault())
                         .toLocalDate()
                         .format(formatter),
-                    color=MaterialTheme.colorScheme.onSurface,
+                    color= if (event.priority != "URG") {MaterialTheme.colorScheme.onSurfaceVariant} else {MaterialTheme.colorScheme.onError},
                     modifier = Modifier
                         .fillMaxWidth(),
                     textAlign = TextAlign.Center
@@ -429,7 +470,7 @@ fun EventItem(event:Event){ // 1 event, TODO : name + deadline + priorité (urge
             ){
                 Text(
                     text=event.priority,
-                    color=MaterialTheme.colorScheme.onSurface,
+                    color=if (event.priority != "URG") {MaterialTheme.colorScheme.onSurface} else {MaterialTheme.colorScheme.onError},
                     modifier = Modifier
                         .fillMaxWidth(),
                     textAlign = TextAlign.Center

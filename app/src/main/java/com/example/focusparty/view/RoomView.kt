@@ -44,6 +44,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.SettingsSuggest
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.tooling.preview.Preview
 import com.example.focusparty.model.TimerState
 
 
@@ -78,6 +79,7 @@ fun RoomContent(
         ActionsMenu(vm)
     }
 }
+
 @Composable
 fun SalonTopBar(vm: RoomViewModel, room: Room) {
 

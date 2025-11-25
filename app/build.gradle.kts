@@ -51,6 +51,8 @@ dependencies {
     implementation("com.google.firebase:firebase-auth")
     implementation(libs.androidx.runtime)
     implementation(libs.androidx.navigation.runtime.ktx)
+    implementation(libs.androidx.tv.material)
+    implementation(libs.androidx.ui.graphics)
     // Compose
     val composeBom = platform("androidx.compose:compose-bom:2025.10.01")
     implementation(composeBom)
