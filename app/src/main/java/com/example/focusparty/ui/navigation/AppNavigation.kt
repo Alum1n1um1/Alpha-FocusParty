@@ -51,8 +51,7 @@ fun AppNavigation(
                 factory = CalendarViewModelFactory(db, navController)
             )
             CalendarScreen (
-                vm = vm,
-                navController = navController
+                vm = vm
             )
         }
 

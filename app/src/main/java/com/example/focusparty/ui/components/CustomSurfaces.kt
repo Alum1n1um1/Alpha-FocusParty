@@ -42,14 +42,14 @@ fun CustomSurface(
 
     val resolvedTonal = tonalElevation ?: when (level) {
         SurfaceLevel.Low    -> 0.dp
-        SurfaceLevel.Normal -> 2.dp
+        SurfaceLevel.Normal -> 3.dp
         SurfaceLevel.High   -> 6.dp
     }
 
     val resolvedShadow = shadowElevation ?: when (level) {
         SurfaceLevel.Low    -> 0.dp
-        SurfaceLevel.Normal -> 1.dp
-        SurfaceLevel.High   -> 4.dp
+        SurfaceLevel.Normal -> 3.dp
+        SurfaceLevel.High   -> 6.dp
     }
 
     val resolvedShape = shape ?: when (level) {

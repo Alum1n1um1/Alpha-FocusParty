@@ -43,9 +43,13 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.SettingsSuggest
 import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.focusparty.model.TimerState
+import com.example.focusparty.ui.components.*
+import com.example.focusparty.ui.theme.*
 
 
 @Composable
@@ -55,7 +59,15 @@ fun RoomScreen(
     val room by vm.room.collectAsState()
 
     if (room == null) {
-        Text("Chargement du salon…")
+        Column(){
+            Text(
+                text="Chargement du salon…",
+                modifier = Modifier
+                    .fillMaxSize(),
+                textAlign = TextAlign.Center
+            )
+            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+        }
     } else {
         RoomContent(
             vm=vm,
@@ -76,7 +88,7 @@ fun RoomContent(
             vm=vm,
             room=room
         )
-        ActionsMenu(vm)
+        ActionsMenu(vm,room)
     }
 }
 
@@ -89,8 +101,7 @@ fun SalonTopBar(vm: RoomViewModel, room: Room) {
             modifier = Modifier
                 .fillMaxWidth()
                 .windowInsetsPadding(WindowInsets.statusBars)
-                .background(MaterialTheme.colorScheme.primary),
-            verticalAlignment = Alignment.CenterVertically
+                .background(MaterialTheme.colorScheme.primary)
         )
         {
 
@@ -126,16 +137,18 @@ fun SalonTopBar(vm: RoomViewModel, room: Room) {
 }
 
 @Composable
-fun ActionsMenu(vm: RoomViewModel) {
-    Column(){
-        RoomStats(vm)
-        LazyColumn() {
-            itemsIndexed(items=vm.getCurrentRoom().jalons) { index, jalon ->
-                JalonItem(
-                    jalon=jalon,
-                    onFinish={vm.endJalon(index, jalon)},
-                    onSettings={}
-                )
+fun ActionsMenu(vm: RoomViewModel,room : Room) {
+    CustomSurface(level = SurfaceLevel.Low) {
+        Column() {
+            RoomStats(vm)
+            LazyColumn() {
+                itemsIndexed(items = room.jalons) { index, jalon ->
+                    JalonItem(
+                        jalon = jalon,
+                        onFinish = { vm.endJalon(index, jalon) },
+                        onSettings = {}
+                    )
+                }
             }
         }
     }
@@ -158,40 +171,73 @@ fun JalonItem(
     onFinish: () -> Unit,
     onSettings: () -> Unit
 ) {
+    val surfaceColor = if (jalon.isDone){ colorGreenlight3 } else {colorYellowlight3}
+    val onSurfaceColor = if (jalon.isDone){ colorGreendark3 } else {colorYellowdark3}
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(48.dp)
-            .padding(horizontal = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    )
-    {
-        Box(Modifier.weight(2f), Alignment.CenterStart)
-        {
-            Text(text=jalon.name+"/"+jalon.isDone.toString())
-        }
-        Box(Modifier.weight(2f), Alignment.Center)
-        {
-            if(jalon.isDone)
-            {
-                Text("Terminé")
+    CustomSurface(
+        level = SurfaceLevel.High,
+        color = surfaceColor
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp)
+                .padding(horizontal = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
+        ) {
+
+            // Décalage gauche
+            Spacer(Modifier.width(8.dp))
+
+            // Zone texte : prend tout l’espace disponible
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 8.dp),
+                contentAlignment = Alignment.CenterStart
+            ) {
+                Text(
+                    text = jalon.name,
+                    color = onSurfaceColor
+                )
             }
-            else
-            {
-                Button(onFinish)
-                {
-                    Text("Terminer")
+
+            // Zone bouton avec largeur fixe
+            Box(
+                modifier = Modifier
+                    .width(130.dp)
+                    .padding(end = 8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                if (jalon.isDone) {
+                    Text(
+                        text = "Terminé",
+                        color = onSurfaceColor
+                    )
+                } else {
+                    Button(onClick = onFinish) {
+                        Text(
+                            "Terminer",
+                            color = onSurfaceColor
+                        )
+                    }
                 }
             }
-        }
-        Box(Modifier.weight(1f), Alignment.CenterEnd)
-        {
-            IconButton(
-                {}
-            )
-            {
-                Icon(Icons.Default.SettingsSuggest, "Paramètre du jalon")
+
+            // Zone icône avec largeur fixe
+            Box(
+                modifier = Modifier
+                    .width(35.dp)
+                    .padding(end = 8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                IconButton(onClick = onSettings) {
+                    Icon(
+                        Icons.Default.SettingsSuggest,
+                        contentDescription = "Paramètres du jalon"
+                    )
+                }
             }
         }
     }
@@ -202,138 +248,144 @@ fun Pomodoro(
     vm: RoomViewModel,
     room: Room
 ) {
-    val remaining by vm.remaining.collectAsState()
-    val timer = room.timer
-    val state = timer.state
+    CustomSurface(
+        level = SurfaceLevel.High,
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(12.dp)
+    ){
+        val remaining by vm.remaining.collectAsState()
+        val timer = room.timer
+        val state = timer.state
 
-    // ---------------------------------------------------------
-    // A. Aucun timer (state = NONE)
-    // ---------------------------------------------------------
-    if (state == TimerState.NONE) {
+        // ---------------------------------------------------------
+        // A. Aucun timer (state = NONE)
+        // ---------------------------------------------------------
+        if (state == TimerState.NONE) {
 
-        var hours by remember { mutableStateOf(0) }
-        var minutes by remember { mutableStateOf(1) } /////////////////////CHANGER POUR 25
+            var hours by remember { mutableStateOf(0) }
+            var minutes by remember { mutableStateOf(1) } /////////////////////CHANGER POUR 25
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            Box (
-                modifier=Modifier.weight(1f)
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
             ) {
-                NumberPicker(
-                    label = "Heures",
-                    value = hours,
-                    range = 0..5
+                Box(
+                    modifier = Modifier.weight(1f)
                 ) {
-                    hours = it
-                }
-            }
-            Box (
-                modifier=Modifier.weight(1f)
-            ) {
-                NumberPicker(label = "Minutes", value = minutes, range = 0..59) {
-                    minutes = it
-                }
-            }
-            Box (
-                modifier=Modifier.weight(1f),
-                contentAlignment = Alignment.Center
-            ) {
-                Button(
-                    onClick = {
-                        val totalMinutes = hours * 60 + minutes
-                        val duration = Duration.ofMinutes(totalMinutes.toLong())
-                        vm.startPomodoro(duration)
+                    NumberPicker(
+                        label = "Heures",
+                        value = hours,
+                        range = 0..5
+                    ) {
+                        hours = it
                     }
+                }
+                Box(
+                    modifier = Modifier.weight(1f)
                 ) {
-                    Text("Lancer")
+                    NumberPicker(label = "Minutes", value = minutes, range = 0..59) {
+                        minutes = it
+                    }
                 }
-            }
-        }
-        return
-    }
-
-    // ---------------------------------------------------------
-    // Préparation valeurs communes RUNNING / PAUSED
-    // ---------------------------------------------------------
-    val totalMs = timer.durationMs
-    val remainingMs = remaining.toMillis()
-    val doneMs = (totalMs - remainingMs).coerceAtLeast(0L)
-    val progress = (doneMs.toFloat() / totalMs.toFloat()).coerceIn(0f, 1f)
-
-
-    val m = remaining.toMinutes()
-    val s = remaining.toSeconds() % 60
-
-    // ---------------------------------------------------------
-    // B. Timer en pause (state = PAUSED)
-    // ---------------------------------------------------------
-    if (state == TimerState.PAUSED) {
-
-        Column(
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-
-            LinearProgressIndicator(
-                progress = progress,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Text(
-                text = "%02d:%02d".format(m, s),
-                style = MaterialTheme.typography.headlineMedium
-            )
-
-            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                Button(onClick = { vm.resumePomodoro() }) {
-                    Text("Reprendre")
-                }
-                Button(onClick = { vm.stopPomodoro() }) {
-                    Text("Arrêter")
-                }
-            }
-        }
-        return
-    }
-
-    // ---------------------------------------------------------
-    // C. Timer en cours (state = RUNNING)
-    // ---------------------------------------------------------
-    if (state == TimerState.RUNNING) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-
-            LinearProgressIndicator(
-                progress = progress,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Text(
-                text = "%02d:%02d".format(m, s),
-                style = MaterialTheme.typography.headlineMedium
-            )
-
-            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                Button(onClick = { vm.pausePomodoro() }) {
-                    Text("Pause")
-                }
-                Button(onClick = { vm.stopPomodoro() }) {
-                    Text("Arrêter")
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Button(
+                        onClick = {
+                            val totalMinutes = hours * 60 + minutes
+                            val duration = Duration.ofMinutes(totalMinutes.toLong())
+                            vm.startPomodoro(duration)
+                        }
+                    ) {
+                        Text("Lancer")
+                    }
                 }
             }
         }
 
+        // ---------------------------------------------------------
+        // Préparation valeurs communes RUNNING / PAUSED
+        // ---------------------------------------------------------
+        val totalMs = timer.durationMs
+        val remainingMs = remaining.toMillis()
+        val doneMs = (totalMs - remainingMs).coerceAtLeast(0L)
+        val progress = (doneMs.toFloat() / totalMs.toFloat()).coerceIn(0f, 1f)
+
+
+        val m = remaining.toMinutes()
+        val s = remaining.toSeconds() % 60
+
+        // ---------------------------------------------------------
+        // B. Timer en pause (state = PAUSED)
+        // ---------------------------------------------------------
+        if (state == TimerState.PAUSED) {
+
+            Column(
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+
+                LinearProgressIndicator(
+                    progress = progress,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Text(
+                    text = "%02d:%02d".format(m, s),
+                    style = MaterialTheme.typography.headlineMedium
+                )
+
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Button(onClick = { vm.resumePomodoro() }) {
+                        Text("Reprendre")
+                    }
+                    Button(onClick = { vm.stopPomodoro() }) {
+                        Text("Arrêter")
+                    }
+                }
+            }
+        }
+
+        // ---------------------------------------------------------
+        // C. Timer en cours (state = RUNNING)
+        // ---------------------------------------------------------
+        if (state == TimerState.RUNNING) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+
+                LinearProgressIndicator(
+                    progress = progress,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Text(
+                    text = "%02d:%02d".format(m, s),
+                    style = MaterialTheme.typography.headlineMedium
+                )
+
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Button(onClick = { vm.pausePomodoro() }) {
+                        Text("Pause")
+                    }
+                    Button(onClick = { vm.stopPomodoro() }) {
+                        Text("Arrêter")
+                    }
+                }
+            }
+        }
     }
 }
 
