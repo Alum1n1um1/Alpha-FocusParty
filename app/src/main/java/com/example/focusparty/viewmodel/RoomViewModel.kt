@@ -36,21 +36,17 @@ class RoomViewModel(
 
     private var countdownJob: Job? = null
     private var lastTimer: Timer? = null
-
     private var workedMs : Duration = Duration.ZERO
-
 
     init {
         viewModelScope.launch {
             db.getRoomById(roomId).collect { fetchedRoom  ->
                 val old = lastTimer
                 val new = fetchedRoom?.timer
-
                 if (old != null && new != null) {
                     detectTimerEvents(old, new)
                 }
                 lastTimer = new
-                room.value = fetchedRoom
             }
         }
         startCountdownLoop()
@@ -108,12 +104,6 @@ class RoomViewModel(
         }
     }
 
-
-    fun getCurrentRoom():Room {
-        return room.value!!
-
-    }
-
     fun startPomodoro(duration: Duration) = viewModelScope.launch {
         Log.w("DEBUG","")
         db.startTimer(roomId, duration)
@@ -138,7 +128,7 @@ class RoomViewModel(
 
     fun endJalon(index: Int, jalon: Jalon) = viewModelScope
         .launch{
-        db.jalonIsDone(roomId, index, jalon)
+        db.endJalon(roomId, index, jalon)
     }
 
 

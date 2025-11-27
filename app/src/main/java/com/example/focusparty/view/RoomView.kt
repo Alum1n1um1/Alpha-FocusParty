@@ -56,17 +56,25 @@ import com.example.focusparty.ui.theme.*
 fun RoomScreen(
     vm: RoomViewModel
 ) {
-    val room by vm.room.collectAsState()
+    val room by vm.roomState.collectAsState()
 
     if (room == null) {
-        Column(){
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+
+        ) {
             Text(
-                text="Chargement du salon…",
-                modifier = Modifier
-                    .fillMaxSize(),
+                text = "Chargement du salon …",
                 textAlign = TextAlign.Center
             )
-            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+            Spacer(modifier = Modifier.height(20.dp))
+            CircularProgressIndicator(
+                color = MaterialTheme.colorScheme.primary
+            )
         }
     } else {
         RoomContent(
@@ -145,7 +153,8 @@ fun ActionsMenu(vm: RoomViewModel,room : Room) {
                 itemsIndexed(items = room.jalons) { index, jalon ->
                     JalonItem(
                         jalon = jalon,
-                        onFinish = { vm.endJalon(index, jalon) },
+                        onFinish = {
+                            vm.endJalon(index, jalon.copy(isDone=true)) },
                         onSettings = {}
                     )
                 }
@@ -265,7 +274,7 @@ fun Pomodoro(
         if (state == TimerState.NONE) {
 
             var hours by remember { mutableStateOf(0) }
-            var minutes by remember { mutableStateOf(1) } /////////////////////CHANGER POUR 25
+            var minutes by remember { mutableStateOf(30) } /////////////////////CHANGER POUR 25
 
 
             Row(

@@ -1,5 +1,6 @@
 package com.example.focusparty.model
 
+import android.util.Log
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentSnapshot
@@ -360,10 +361,77 @@ class Database(
         rooms.document(roomId).update("timer", newTimer).await()
     }
 
-    suspend fun jalonIsDone(roomId: String, index: Int, jalon: Jalon)
-    {
-        val updatedJalon = Jalon(jalon.name, true)
+    suspend fun endJalon(roomId: String, index: Int, jalon: Jalon) {
+
+        Log.w(
+            "DEBUG_END_JALON",
+            ">>> Appel endJalon(roomId=$roomId, index=$index, name=${jalon.name}, isDone=${jalon.isDone})"
+        )
+
+        val roomRef = rooms.document(roomId)
+
+        try {
+            store.runTransaction { tx ->
+
+                // ----------- 1) Lire TOUT en premier -----------
+                val snapRoom = tx.get(roomRef)
+                if (!snapRoom.exists()) {
+                    throw IllegalStateException("Room introuvable : $roomId")
+                }
+
+                val jalons = snapRoom.get("jalons") as? List<Map<String, Any>>
+                    ?: throw IllegalStateException("Champ 'jalons' absent ou invalide")
+
+                if (index !in jalons.indices) {
+                    throw IllegalArgumentException("Index jalon invalide : $index")
+                }
+
+                val members = snapRoom.get("members") as? List<String> ?: emptyList()
+
+                // Lire tous les utilisateurs AVANT toute écriture
+                val userSnaps = members.associateWith { uid ->
+                    val ref = users.document(uid)
+                    ref to tx.get(ref)      // lecture obligatoire en amont
+                }
+
+                // ----------- 2) Préparer les nouvelles valeurs -----------
+
+                // Mise à jour du jalon
+                val updatedJalon = mapOf(
+                    "name" to jalon.name,
+                    "isDone" to jalon.isDone
+                )
+                val updatedList = jalons.toMutableList()
+                updatedList[index] = updatedJalon
+
+                // Nouvelles valeurs pour les users
+                val newPoints = userSnaps.mapValues { (_, pair) ->
+                    val (_, snapUser) = pair
+                    (snapUser.getLong("points") ?: 0L) + 50L
+                }
+
+                // ----------- 3) Toutes les écritures UNIQUEMENT maintenant -----------
+
+                // Mettre à jour les jalons
+                tx.update(roomRef, "jalons", updatedList)
+
+                // Mettre à jour les points des membres
+                for ((uid, pts) in newPoints) {
+                    tx.update(users.document(uid), "points", pts)
+                }
+
+            }.await()
+
+            Log.w("DEBUG_END_JALON", ">>> FIN transaction Firestore OK")
+
+        } catch (e: Exception) {
+            Log.e("DEBUG_END_JALON", "Erreur Firestore : ${e.message}", e)
+            throw e
+        }
     }
+
+
+
 
     suspend fun addExpToUser(uid: String, exp: Long): Pair<Int, Int> {
 

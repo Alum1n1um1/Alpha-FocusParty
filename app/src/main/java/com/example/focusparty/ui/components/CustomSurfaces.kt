@@ -80,3 +80,99 @@ fun CustomSurface(
         content()
     }
 }
+
+@Composable
+fun HighSurface(
+    onClick: () -> Unit = {},
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    shape: Shape? = null,
+    color: Color? = null,
+    contentColor: Color? = null,
+    tonalElevation: Dp? = null,
+    shadowElevation: Dp? = null,
+    border: BorderStroke? = null,
+    interactionSource: MutableInteractionSource? = null,
+    content: @Composable () -> Unit
+) {
+    // Composition
+    CustomSurface(
+        level=SurfaceLevel.High,
+        onClick = onClick,
+        enabled = enabled,
+        modifier = modifier,
+        shape = shape,
+        color = color,
+        contentColor = contentColor,
+        tonalElevation = tonalElevation,
+        shadowElevation = shadowElevation,
+        border = border,
+        interactionSource = interactionSource
+    ) {
+        content()
+    }
+}
+
+@Composable
+fun LowSurface(
+    onClick: () -> Unit = {},
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    shape: Shape? = null,
+    color: Color? = null,
+    contentColor: Color? = null,
+    tonalElevation: Dp? = null,
+    shadowElevation: Dp? = null,
+    border: BorderStroke? = null,
+    interactionSource: MutableInteractionSource? = null,
+    content: @Composable () -> Unit
+) {
+    // Composition
+    CustomSurface(
+        level=SurfaceLevel.Low,
+        onClick = onClick,
+        enabled = enabled,
+        modifier = modifier,
+        shape = shape,
+        color = color,
+        contentColor = contentColor,
+        tonalElevation = tonalElevation,
+        shadowElevation = shadowElevation,
+        border = border,
+        interactionSource = interactionSource
+    ) {
+        content()
+    }
+}
+
+@Composable
+fun NormalSurface(
+    onClick: () -> Unit = {},
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    shape: Shape? = null,
+    color: Color? = null,
+    contentColor: Color? = null,
+    tonalElevation: Dp? = null,
+    shadowElevation: Dp? = null,
+    border: BorderStroke? = null,
+    interactionSource: MutableInteractionSource? = null,
+    content: @Composable () -> Unit
+) {
+    // Composition
+    CustomSurface(
+        level=SurfaceLevel.Normal,
+        onClick = onClick,
+        enabled = enabled,
+        modifier = modifier,
+        shape = shape,
+        color = color,
+        contentColor = contentColor,
+        tonalElevation = tonalElevation,
+        shadowElevation = shadowElevation,
+        border = border,
+        interactionSource = interactionSource
+    ) {
+        content()
+    }
+}

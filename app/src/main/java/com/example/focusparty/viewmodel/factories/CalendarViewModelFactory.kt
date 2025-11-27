@@ -1,22 +1,29 @@
-package com.example.focusparty.viewmodel.factories
+package com.example.focusparty.model.factories
 
+import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavController
 import com.example.focusparty.model.Database
 import com.example.focusparty.viewmodel.CalendarViewModel
-import com.example.focusparty.viewmodel.HomeViewModel
-
 
 class CalendarViewModelFactory(
     private val db: Database,
-    private val navController: NavController
+    private val navController: NavController,
+    private val application: Application
 ) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(clazz: Class<T>): T {
-        if (clazz.isAssignableFrom(CalendarViewModel::class.java)) {
+
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+
+        if (modelClass.isAssignableFrom(CalendarViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return CalendarViewModel(db,navController) as T
+            return CalendarViewModel(
+                db = db,
+                navController = navController,
+                application = application
+            ) as T
         }
-        error("Unknown VM: $clazz")
+
+        throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
     }
 }

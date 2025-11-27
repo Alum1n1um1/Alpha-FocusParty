@@ -1,8 +1,10 @@
 package com.example.focusparty.ui.navigation
 
+import android.app.Application
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -10,20 +12,10 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.example.focusparty.model.Database
-import com.example.focusparty.viewmodel.factories.CalendarViewModelFactory
-import com.example.focusparty.viewmodel.factories.HomeViewModelFactory
-import com.example.focusparty.viewmodel.factories.RegisterViewModelFactory
-import com.example.focusparty.viewmodel.factories.RoomViewModelFactory
-import com.example.focusparty.view.HomeScreen
-import com.example.focusparty.view.CalendarScreen
-import com.example.focusparty.view.LoginScreen
-import com.example.focusparty.view.RegisterScreen
-import com.example.focusparty.view.RoomScreen
-import com.example.focusparty.viewmodel.CalendarViewModel
-import com.example.focusparty.viewmodel.HomeViewModel
-import com.example.focusparty.viewmodel.LoginViewModel
-import com.example.focusparty.viewmodel.RegisterViewModel
-import com.example.focusparty.viewmodel.RoomViewModel
+import com.example.focusparty.model.factories.CalendarViewModelFactory
+import com.example.focusparty.viewmodel.factories.*
+import com.example.focusparty.view.*
+import com.example.focusparty.viewmodel.*
 
 @Composable
 fun AppNavigation(
@@ -34,6 +26,8 @@ fun AppNavigation(
         navController = navController,
         startDestination = "Home"
     ) {
+
+
         // Ici on rajoute les différentes pages
 
         composable("Home") {
@@ -47,8 +41,10 @@ fun AppNavigation(
         }
 
         composable("Calendar") {
+            val app = LocalContext.current.applicationContext as Application
+
             val vm: CalendarViewModel = viewModel(
-                factory = CalendarViewModelFactory(db, navController)
+                factory = CalendarViewModelFactory(db, navController, app)
             )
             CalendarScreen (
                 vm = vm
