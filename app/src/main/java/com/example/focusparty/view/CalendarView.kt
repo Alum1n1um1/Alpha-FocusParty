@@ -56,6 +56,9 @@ fun CalendarScreen(
         )
         vm.loadDeviceCalendarEvents()
     }
+    LaunchedEffect(Unit) {
+        vm.loadDeviceCalendarEvents()
+    }
 
 
     // Picker ICS
@@ -94,21 +97,15 @@ fun CalendarScreen(
             if (vm.showAddDialog) {
                 AddEventDialog(
                     onDismiss = { vm.closeAddEventDialog() },
-                    onValidate = { title, date, isTask ->
-                        val dateStart = Date.from(
-                            date.atStartOfDay(ZoneId.systemDefault()).toInstant()
-                        )
-                        // +30 minutes
-                        val deadline = Date(dateStart.time + 30 * 60 * 1000)
-
+                    onValidate = { event ->
                         vm.addEvent(
-                            name = title,
-                            dateStart = dateStart,
-                            deadline = deadline,
-                            periodicity = "none",
-                            members = emptyList(),
-                            notif = emptyList(),
-                            priority = if (isTask) "Normal" else "Urgent"
+                            name = event.name,
+                            dateStart = event.date_start,
+                            deadline = event.deadline,
+                            periodicity = event.perodicity,
+                            members = event.members,
+                            notif = event.notif,
+                            priority = event.priority
                         )
                     }
                 )
@@ -122,28 +119,26 @@ fun SimpleCalendar(
     events: List<Event>,
     onDayClick: (LocalDate) -> Unit
 ) {
-    val currentMonth = YearMonth.now()
+    var currentMonth by remember { mutableStateOf(YearMonth.now()) }
+
+    // Recalcul dynamique selon currentMonth
     val firstDay = currentMonth.atDay(1)
     val daysInMonth = currentMonth.lengthOfMonth()
-
-    // Jour de la semaine du 1er : 1 = lundi, 7 = dimanche
-    val firstDayColumn = firstDay.dayOfWeek.value
-
-    // Nombre de cases vides avant le jour 1
+    val firstDayColumn = firstDay.dayOfWeek.value   // 1 = lundi
     val leadingEmptyCells = firstDayColumn - 1
-
     val totalCells = leadingEmptyCells + daysInMonth
 
+    fun hasEventsFor(date: LocalDate): Boolean {
+        return events.any { e ->
+            e.date_start.toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate() == date
+        }
+    }
+
     Column {
-        var currentMonth by remember { mutableStateOf(YearMonth.now()) }
 
-        val firstDay = currentMonth.atDay(1)
-        val daysInMonth = currentMonth.lengthOfMonth()
-        val firstDayColumn = firstDay.dayOfWeek.value   // 1 = lundi
-        val leadingEmptyCells = firstDayColumn - 1
-        val totalCells = leadingEmptyCells + daysInMonth
-
-
+        // HEADER MOIS + BOUTONS
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -151,48 +146,23 @@ fun SimpleCalendar(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-
-            IconButton(onClick = {
-                currentMonth = currentMonth.minusMonths(1)
-            }) {
-                Icon(
-                    Icons.Default.ArrowBack,
-                    contentDescription = "Mois précédent"
-                )
+            IconButton(onClick = { currentMonth = currentMonth.minusMonths(1) }) {
+                Icon(Icons.Default.ArrowBack, contentDescription = "Mois précédent")
             }
 
             Text(
-                text = when (currentMonth.month.name){
-                    "JANUARY" -> "Janvier"
-                    "FEBRUARY" -> "Février"
-                    "MARCH" -> "Mars"
-                    "APRIL" -> "Avril"
-                    "MAY" -> "Mai"
-                    "JUNE" -> "Juin"
-                    "JULY" -> "Juillet"
-                    "AUGUST" -> "Août"
-                    "SEPTEMBER" -> "Septembre"
-                    "OCTOBER" -> "Octobre"
-                    "NOVEMBER" -> "Novembre"
-                    "DECEMBER" -> "Décembre"
-                    else -> currentMonth.month.name
-                }+" " + currentMonth.year.toString(),
+                text = formatMonth(currentMonth),
                 style = MaterialTheme.typography.titleLarge
             )
 
-            IconButton(onClick = {
-                currentMonth = currentMonth.plusMonths(1)
-            }) {
-                Icon(
-                    Icons.Default.ArrowForward,
-                    contentDescription = "Mois suivant"
-                )
+            IconButton(onClick = { currentMonth = currentMonth.plusMonths(1) }) {
+                Icon(Icons.Default.ArrowForward, contentDescription = "Mois suivant")
             }
         }
 
         Spacer(Modifier.height(8.dp))
 
-        // en-tête L M M J V S D
+        // EN-TÊTE SEMAINE
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
@@ -201,14 +171,13 @@ fun SimpleCalendar(
                 Box(
                     modifier = Modifier.weight(1f),
                     contentAlignment = Alignment.Center
-                ) {
-                    Text(label)
-                }
+                ) { Text(label) }
             }
         }
 
         Spacer(Modifier.height(8.dp))
 
+        // GRILLE
         LazyVerticalGrid(
             columns = GridCells.Fixed(7),
             modifier = Modifier.fillMaxWidth()
@@ -217,7 +186,6 @@ fun SimpleCalendar(
             items(totalCells) { index ->
 
                 if (index < leadingEmptyCells) {
-                    // case vide avant le 1er
                     Box(
                         modifier = Modifier
                             .padding(4.dp)
@@ -226,24 +194,31 @@ fun SimpleCalendar(
                 } else {
                     val day = index - leadingEmptyCells + 1
                     val date = LocalDate.of(currentMonth.year, currentMonth.month, day)
+                    val hasEvent = hasEventsFor(date)
 
                     Box(
                         modifier = Modifier
                             .padding(4.dp)
                             .aspectRatio(1f)
+                            .background(
+                                if (hasEvent) MaterialTheme.colorScheme.secondaryContainer
+                                else MaterialTheme.colorScheme.surface
+                            )
                             .clickable { onDayClick(date) },
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("$day")
+                        Text(
+                            text = "$day",
+                            color = if (hasEvent)
+                                MaterialTheme.colorScheme.onSecondaryContainer
+                            else MaterialTheme.colorScheme.onSurface
+                        )
                     }
                 }
             }
         }
     }
 }
-
-
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -269,22 +244,89 @@ fun CalendarTopBar(onImportClick: () -> Unit) {
 @Composable
 fun AddEventDialog(
     onDismiss: () -> Unit,
-    onValidate: (String, LocalDate, Boolean) -> Unit
+    onValidate: (Event) -> Unit
 ) {
     var title by remember { mutableStateOf("") }
-    var date by remember { mutableStateOf(LocalDate.now()) }
+    var dateStart by remember { mutableStateOf(LocalDate.now()) }
+    var deadline by remember { mutableStateOf(LocalDate.now()) }
+    var periodicity by remember { mutableStateOf("Aucune") }
+    var notifRaw by remember { mutableStateOf("") }
+    var priority by remember { mutableStateOf("Normal") }
     var isTask by remember { mutableStateOf(false) }
+
+    val periodicityOptions = listOf("Aucune", "Quotidienne", "Hebdomadaire", "Mensuelle", "Annuelle")
+    val priorityOptions = listOf("Urgent", "Normal", "Peut attendre")
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Nouvel élément") },
         text = {
             Column {
+
                 OutlinedTextField(
                     value = title,
                     onValueChange = { title = it },
-                    label = { Text("Titre") }
+                    label = { Text("Titre") },
+                    modifier = Modifier.fillMaxWidth()
                 )
+
+                Spacer(Modifier.height(16.dp))
+
+                // DATE DEBUT
+                OutlinedTextField(
+                    value = dateStart.toString(),
+                    onValueChange = {},
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { /* ouvre ton date picker */ },
+                    label = { Text("Date de début") },
+                    readOnly = true
+                )
+
+                Spacer(Modifier.height(8.dp))
+
+                // DEADLINE
+                OutlinedTextField(
+                    value = deadline.toString(),
+                    onValueChange = {},
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { /* ouvre ton date picker */ },
+                    label = { Text("Deadline") },
+                    readOnly = true
+                )
+
+                Spacer(Modifier.height(16.dp))
+
+                // PERIODICITE
+                DropdownMenuField(
+                    label = "Périodicité",
+                    options = periodicityOptions,
+                    selected = periodicity,
+                    onSelect = { periodicity = it }
+                )
+
+                Spacer(Modifier.height(16.dp))
+
+                // NOTIFICATIONS
+                OutlinedTextField(
+                    value = notifRaw,
+                    onValueChange = { notifRaw = it },
+                    label = { Text("Notifications (séparateur ;)") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(Modifier.height(16.dp))
+
+                // PRIORITE
+                DropdownMenuField(
+                    label = "Priorité",
+                    options = priorityOptions,
+                    selected = priority,
+                    onSelect = { priority = it }
+                )
+
+                Spacer(Modifier.height(16.dp))
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Checkbox(
@@ -296,15 +338,89 @@ fun AddEventDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = { onValidate(title, date, isTask) }) {
+            TextButton(
+                onClick = {
+                    val notifList = notifRaw.split(";")
+                        .map { it.trim() }
+                        .filter { it.isNotBlank() }
+
+                    val event = Event(
+                        name = title,
+                        date_start = Date.from(dateStart.atStartOfDay(ZoneId.systemDefault()).toInstant()),
+                        deadline = Date.from(deadline.atStartOfDay(ZoneId.systemDefault()).toInstant()),
+                        perodicity = periodicity,
+                        members = emptyList(),
+                        notif = notifList,
+                        priority = priority
+                    )
+
+                    onValidate(event)
+                }
+            ) {
                 Text("Valider")
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text("Annuler")
-
             }
         }
     )
+}
+
+@Composable
+fun DropdownMenuField(
+    label: String,
+    options: List<String>,
+    selected: String,
+    onSelect: (String) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box {
+        OutlinedTextField(
+            value = selected,
+            onValueChange = {},
+            label = { Text(label) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { expanded = true },
+            readOnly = true
+        )
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            options.forEach { opt ->
+                DropdownMenuItem(
+                    text = { Text(opt) },
+                    onClick = {
+                        onSelect(opt)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+
+
+@Composable
+fun formatMonth(month: YearMonth): String {
+    return when (month.month) {
+        java.time.Month.JANUARY -> "Janvier"
+        java.time.Month.FEBRUARY -> "Février"
+        java.time.Month.MARCH -> "Mars"
+        java.time.Month.APRIL -> "Avril"
+        java.time.Month.MAY -> "Mai"
+        java.time.Month.JUNE -> "Juin"
+        java.time.Month.JULY -> "Juillet"
+        java.time.Month.AUGUST -> "Août"
+        java.time.Month.SEPTEMBER -> "Septembre"
+        java.time.Month.OCTOBER -> "Octobre"
+        java.time.Month.NOVEMBER -> "Novembre"
+        java.time.Month.DECEMBER -> "Décembre"
+    } + " " + month.year
 }

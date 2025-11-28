@@ -420,7 +420,7 @@ fun RoomItem(room:Room,vm: HomeViewModel){ // 1 salon, TODO : name + nombre de p
 fun EventSection(vm: HomeViewModel) {
     val events by vm.events.collectAsState()
     CustomSurface(
-        level = SurfaceLevel.Normal
+        level = SurfaceLevel.Low
     ){
         LazyColumn {
             items(events) { event ->
@@ -436,6 +436,9 @@ fun EventItem(event:Event){ // 1 event, TODO : name + deadline + priorité (urge
     CustomSurface(
         level = SurfaceLevel.Normal,
         color = if (event.priority != "URG") {MaterialTheme.colorScheme.surface} else {MaterialTheme.colorScheme.error},
+        modifier = Modifier
+            .height(40.dp)
+            .padding(5.dp)
     ){
         Row(){
             Box(

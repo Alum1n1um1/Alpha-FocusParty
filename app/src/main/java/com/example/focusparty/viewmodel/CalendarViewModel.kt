@@ -5,6 +5,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.net.Uri
 import android.provider.CalendarContract
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -16,6 +17,7 @@ import com.example.focusparty.model.Event
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
 import java.util.Calendar
 import java.util.Date
 import java.util.TimeZone
@@ -34,7 +36,6 @@ class CalendarViewModel(
 
     var filePickerRequest by mutableStateOf<Boolean?>(null)
         private set
-
 
 
     // --------------------
@@ -307,6 +308,7 @@ class CalendarViewModel(
 
         cursor.use {
             while (it.moveToNext()) {
+
                 val title = it.getString(1) ?: ""
                 val dtStart = Date(it.getLong(2))
                 val dtEnd = Date(it.getLong(3))
@@ -320,12 +322,14 @@ class CalendarViewModel(
                     notif = emptyList(),
                     priority = "Normal"
                 )
-
+                Log.w("DEBUG","\n\n\nloadDeviceCalendarEvents\n"+event.name.toString())
                 list.add(event)
             }
         }
 
         events = list
     }
+
+
 
 }
