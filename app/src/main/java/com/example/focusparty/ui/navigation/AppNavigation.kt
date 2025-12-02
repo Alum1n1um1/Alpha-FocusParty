@@ -40,6 +40,25 @@ fun AppNavigation(
             )
         }
 
+        composable("Leaderboard") {
+            val vm: LeaderboardViewModel = viewModel(
+                factory = LeaderboardViewModelFactory(db, navController)
+            )
+            LeaderboardScreen(
+                vm = vm
+            )
+        }
+
+        // SHOP
+        composable("Shop") {
+            val vm: ShopViewModel = viewModel(
+                factory = ShopViewModelFactory(db, navController)
+            )
+            ShopScreen(
+                vm = vm
+            )
+        }
+
         composable("Calendar") {
             val app = LocalContext.current.applicationContext as Application
 

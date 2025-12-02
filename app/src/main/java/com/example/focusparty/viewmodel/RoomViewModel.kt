@@ -176,12 +176,15 @@ class RoomViewModel(
 
     fun onPomodoroFinished(durationMs: Long) {
         viewModelScope.launch {
-            val exp = 2500 * durationMs / 1000 / 60 / 30    // 2500 exp par 30 minutes
-            Log.w("DEBUG","onPomodoroFinished,  exp = "+exp.toString())
+            val exp = 2500 * durationMs / 1000 / 60 / 30
             db.addExpToUser(uid, exp)
+            db.addWorkedTimeToUser(uid, durationMs)
+            db.addWorkedTimeToRoom(roomId, durationMs)
         }
+
         workedMs = Duration.ZERO
     }
+
 
 
 }

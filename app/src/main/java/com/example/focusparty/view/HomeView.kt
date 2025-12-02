@@ -24,53 +24,78 @@ import com.example.focusparty.model.Event
 import com.example.focusparty.model.Jalon
 import com.example.focusparty.model.Room
 import com.example.focusparty.ui.components.CustomSurface
+import com.example.focusparty.ui.components.HomeBottomBar
 import com.example.focusparty.ui.components.SurfaceLevel
-import com.example.focusparty.ui.theme.AppTheme
+import com.example.focusparty.ui.theme.*
 import com.example.focusparty.viewmodel.HomeViewModel
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 @Composable
-fun HomeScreen(vm: HomeViewModel, navController: NavHostController) {
-    Column (
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-    ){
-        HomeTopBar(vm)
+fun HomeScreen(
+    vm: HomeViewModel,
+    navController: NavHostController
+) {
+
+    Scaffold(
+        topBar = {
+            HomeTopBar(vm)
+        },
+        bottomBar = {
+            HomeBottomBar(
+                currentDestination = "home",
+                onNavigate = { dest -> navController.navigate(dest) }
+            )
+        }
+    ) { padding ->
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(
+                    top = padding.calculateTopPadding(),
+                    bottom = padding.calculateBottomPadding()
+                )
+                .background(MaterialTheme.colorScheme.background)
         ) {
-            Box(modifier = Modifier.weight(1f)) {
-                Stats(vm)
-            }
-            HorizontalDivider(
-                thickness = 1.dp,
-                color = MaterialTheme.colorScheme.secondary,
-                modifier = Modifier
-                    .fillMaxWidth(0.65f)
-                    .align(Alignment.CenterHorizontally)
-            )
 
-            Box(modifier = Modifier.weight(2f)) {
-                RoomsSection(vm)
-            }
-            HorizontalDivider(
-                thickness = 1.dp,
-                color = MaterialTheme.colorScheme.secondary,
-                modifier = Modifier
-                    .fillMaxWidth(0.65f)
-                    .align(Alignment.CenterHorizontally)
-            )
+            Column(
+                modifier = Modifier.fillMaxSize()
+            ) {
 
-            Box(modifier = Modifier.weight(2f)) {
-                EventSection(vm)
+                Box(modifier = Modifier.weight(1f)) {
+                    Stats(vm)
+                }
+
+                HorizontalDivider(
+                    thickness = 1.dp,
+                    color = MaterialTheme.colorScheme.secondary,
+                    modifier = Modifier
+                        .fillMaxWidth(0.65f)
+                        .align(Alignment.CenterHorizontally)
+                )
+
+                Box(modifier = Modifier.weight(2f)) {
+                    RoomsSection(vm)
+                }
+
+                HorizontalDivider(
+                    thickness = 1.dp,
+                    color = MaterialTheme.colorScheme.secondary,
+                    modifier = Modifier
+                        .fillMaxWidth(0.65f)
+                        .align(Alignment.CenterHorizontally)
+                )
+
+                Box(modifier = Modifier.weight(2f)) {
+                    EventSection(vm)
+                }
             }
         }
     }
 }
+
 
 
 @Composable
@@ -143,13 +168,12 @@ fun HomeTopBar(vm: HomeViewModel) {
     }
 }
 
-
 @Composable
 fun Stats(vm: HomeViewModel){
     val level by vm.level.collectAsState()
     val maxExp = 50f*level.toFloat()
     val exp by vm.exp.collectAsState()
-    val progress = (exp/maxExp).toFloat()
+    val progress = (exp/maxExp)
     val points by vm.availablePoints.collectAsState()
     LaunchedEffect(Unit) {
         vm.loadLevel()
@@ -162,8 +186,10 @@ fun Stats(vm: HomeViewModel){
     }
     CustomSurface(
         level = SurfaceLevel.High,
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        modifier = Modifier.fillMaxSize()
+        color = colorPurplelight2,
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(10.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxSize()
@@ -180,7 +206,7 @@ fun Stats(vm: HomeViewModel){
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "LVL" + level.toString(),
+                        text = "LVL$level",
                         modifier = Modifier.width(48.dp),
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.onSurface
@@ -210,7 +236,7 @@ fun Stats(vm: HomeViewModel){
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Points disponibles : " + points,
+                        text = "Points disponibles : $points",
                         color = MaterialTheme.colorScheme.onSurface
                     )
                 }
@@ -234,7 +260,6 @@ fun Stats(vm: HomeViewModel){
         }
     }
 }
-
 
 @Composable
 fun RoomsSection(vm: HomeViewModel) {
@@ -269,22 +294,17 @@ fun RoomsSection(vm: HomeViewModel) {
     }
 }
 
-
 @Composable
 fun AddRoomButton(onClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(12.dp),
-        horizontalArrangement = Arrangement.Start,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Button(
+    Button(
             onClick = onClick,
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.secondary,
                 contentColor = MaterialTheme.colorScheme.onSecondary
-            )
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(10.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.Add,
@@ -293,9 +313,8 @@ fun AddRoomButton(onClick: () -> Unit) {
             Spacer(modifier = Modifier.width(8.dp))
             Text("Ajouter un salon")
         }
-    }
-}
 
+}
 
 @Composable
 fun CreateRoomDialog(
@@ -358,7 +377,6 @@ fun CreateRoomDialog(
     )
 }
 
-
 @Composable
 fun RoomItem(room:Room,vm: HomeViewModel){ // 1 salon, TODO : name + nombre de personnes dans le salon + lvl du salon (avec icone d'arbre)
 
@@ -415,7 +433,6 @@ fun RoomItem(room:Room,vm: HomeViewModel){ // 1 salon, TODO : name + nombre de p
     }
 }
 
-
 @Composable
 fun EventSection(vm: HomeViewModel) {
     val events by vm.events.collectAsState()
@@ -430,7 +447,6 @@ fun EventSection(vm: HomeViewModel) {
     }
 }
 
-
 @Composable
 fun EventItem(event:Event){ // 1 event, TODO : name + deadline + priorité (urgence ?)
     CustomSurface(
@@ -440,7 +456,7 @@ fun EventItem(event:Event){ // 1 event, TODO : name + deadline + priorité (urge
             .height(40.dp)
             .padding(5.dp)
     ){
-        Row(){
+        Row {
             Box(
                 modifier = Modifier.weight(1f)
             ){
@@ -482,3 +498,10 @@ fun EventItem(event:Event){ // 1 event, TODO : name + deadline + priorité (urge
         }
     }
 }
+
+
+
+
+
+
+

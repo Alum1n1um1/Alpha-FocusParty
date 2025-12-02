@@ -27,7 +27,7 @@ class HomeViewModel(
     val exp = _exp
 
     fun GoToCalendar(){
-        navController.navigate("Calendar")
+        goToDestination("Calendar")
     }
 
     fun GoToUserMenu(){
@@ -37,7 +37,7 @@ class HomeViewModel(
     }
 
     fun GoToRoom(room:Room){
-        navController.navigate("Room/"+room.id)
+        goToDestination("Room/"+room.id)
     }
 
     fun loadAvailablePoints() {
@@ -78,5 +78,9 @@ class HomeViewModel(
 
     fun handleDate(selectedDate: LocalDate) {
 
+    }
+
+    fun goToDestination(dest: String) {
+        navController.navigate(dest)
     }
 }

@@ -1,6 +1,7 @@
 package com.example.focusparty.model
 
 import android.util.Log
+import com.example.focusparty.viewmodel.LeaderboardEntry
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentSnapshot
@@ -15,6 +16,7 @@ import java.util.Date
 import java.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import com.google.firebase.Timestamp
+import com.google.firebase.firestore.Query
 import kotlin.time.Duration.Companion.milliseconds
 
 
@@ -43,7 +45,9 @@ class Database(
             "rooms" to listOf<String>(),
             "comment" to "",
             "first_connection" to true,
-            "points" to 500
+            "points" to 500,
+            "tempsTotal" to 0L,
+            "jalonsTermines" to 0
         )
         users.document(uid).set(user)
     }
@@ -69,7 +73,10 @@ class Database(
                 "startTime" to room.timer.startTime,
                 "durationMs" to room.timer.durationMs,
                 "remainingMs" to room.timer.remainingMs
-            )
+            ),
+            "tempsTotal" to room.tempsTotal,
+            "points" to room.points,
+            "jalonsTermines" to room.jalonsTermines
         )
 
         doc.set(data)
@@ -100,7 +107,6 @@ class Database(
                         )
                     } ?: emptyList()
 
-                // ---------- TIMER ----------
                 val timerMap = doc.get("timer") as? Map<String, Any>
                 val timer = if (timerMap != null) {
 
@@ -122,6 +128,9 @@ class Database(
                 } else {
                     Timer()
                 }
+                val tempsTotal = doc.getLong("tempsTotal") ?: 0L
+                val points = (doc.getLong("points") ?: 0L).toInt()
+                val jalonsTermines = (doc.getLong("jalonsTermines") ?: 0L).toInt()
 
                 Room(
                     id = id,
@@ -131,7 +140,10 @@ class Database(
                     status = status,
                     members = members,
                     jalons = jalons,
-                    timer = timer
+                    timer = timer,
+                    tempsTotal = tempsTotal,
+                    points = points,
+                    jalonsTermines = jalonsTermines
                 )
             }.orEmpty()
 
@@ -188,6 +200,9 @@ class Database(
                 } else {
                     Timer()
                 }
+                val tempsTotal = snap.getLong("tempsTotal") ?: 0L
+                val points = (snap.getLong("points") ?: 0L).toInt()
+                val jalonsTermines = (snap.getLong("jalonsTermines") ?: 0L).toInt()
 
                 trySend(
                     Room(
@@ -198,7 +213,10 @@ class Database(
                         status = status,
                         members = members,
                         jalons = jalons,
-                        timer = timer
+                        timer = timer,
+                        tempsTotal = tempsTotal,
+                        points = points,
+                        jalonsTermines = jalonsTermines
                     )
                 )
 
@@ -210,40 +228,6 @@ class Database(
         awaitClose { registration.remove() }
     }
 
-    fun getUsers() { // Récupère tous les utilisateurs
-        // TODO
-    }
-
-    fun getEvents(): Flow<List<Event>> = callbackFlow { // Récupère tous les évènements
-        val col = store.collection("events")
-        val reg = col.addSnapshotListener { snap, err ->
-            if (err != null) {
-                // on peut close ou envoyer liste vide selon ton choix
-                trySend(emptyList())
-                return@addSnapshotListener
-            }
-            val list = snap?.documents?.mapNotNull { doc ->
-                val name = doc.getString("name") ?: ""
-                val date_start = doc.getDate("date_start")?: Date()
-                val deadline = doc.getDate("deadline")?: Date()
-                val perodicity = doc.getString("periodicity") ?: ""
-                val members = doc.get("members") as? List<String> ?: emptyList()
-                val notif = doc.get("notif") as? List<String> ?: emptyList()
-                val priority = doc.getString("priority") ?: ""
-
-                Event(name = name,
-                    date_start = date_start,
-                    deadline = deadline,
-                    perodicity = perodicity,
-                    members = members,
-                    notif = notif,
-                    priority = priority
-                )
-            }.orEmpty()
-            trySend(list)
-        }
-        awaitClose { reg.remove() }
-    }
     fun getEventsOf(uid: String): Flow<List<Event>> = callbackFlow {
         val query = store
             .collection("events")
@@ -271,14 +255,6 @@ class Database(
         }
 
         awaitClose { registration.remove() }
-    }
-
-    fun getFriends(user:String) { // Récupère les amis de l'utilisateur
-        TODO()
-    }
-
-    fun addFriend(user:String, friend:String) { // Ajoute un ami à l'utilisateur
-        TODO()
     }
 
     suspend fun getDocumentSnapshot(collectionPath: String, doc:String): DocumentSnapshot?{
@@ -362,18 +338,10 @@ class Database(
     }
 
     suspend fun endJalon(roomId: String, index: Int, jalon: Jalon) {
-
-        Log.w(
-            "DEBUG_END_JALON",
-            ">>> Appel endJalon(roomId=$roomId, index=$index, name=${jalon.name}, isDone=${jalon.isDone})"
-        )
-
         val roomRef = rooms.document(roomId)
 
         try {
             store.runTransaction { tx ->
-
-                // ----------- 1) Lire TOUT en premier -----------
                 val snapRoom = tx.get(roomRef)
                 if (!snapRoom.exists()) {
                     throw IllegalStateException("Room introuvable : $roomId")
@@ -388,15 +356,13 @@ class Database(
 
                 val members = snapRoom.get("members") as? List<String> ?: emptyList()
 
-                // Lire tous les utilisateurs AVANT toute écriture
+                val currentRoomMilestones = (snapRoom.getLong("jalonsTermines") ?: 0L)
                 val userSnaps = members.associateWith { uid ->
                     val ref = users.document(uid)
-                    ref to tx.get(ref)      // lecture obligatoire en amont
+                    ref to tx.get(ref)
                 }
 
-                // ----------- 2) Préparer les nouvelles valeurs -----------
-
-                // Mise à jour du jalon
+                // Maj du jalon
                 val updatedJalon = mapOf(
                     "name" to jalon.name,
                     "isDone" to jalon.isDone
@@ -404,20 +370,31 @@ class Database(
                 val updatedList = jalons.toMutableList()
                 updatedList[index] = updatedJalon
 
-                // Nouvelles valeurs pour les users
+                // Points
                 val newPoints = userSnaps.mapValues { (_, pair) ->
-                    val (_, snapUser) = pair
-                    (snapUser.getLong("points") ?: 0L) + 50L
+                    val (_, snapUsuario) = pair
+                    (snapUsuario.getLong("points") ?: 0L) + 50L
                 }
 
-                // ----------- 3) Toutes les écritures UNIQUEMENT maintenant -----------
+                // Jalons terminés par user
+                val newUserMilestones = userSnaps.mapValues { (_, pair) ->
+                    val (_, snapUsuario) = pair
+                    (snapUsuario.getLong("jalonsTermines") ?: 0L) + 1L
+                }
 
-                // Mettre à jour les jalons
+                // Maj la liste complète des jalons
                 tx.update(roomRef, "jalons", updatedList)
 
-                // Mettre à jour les points des membres
-                for ((uid, pts) in newPoints) {
-                    tx.update(users.document(uid), "points", pts)
+                // Incrémenter le compteur de jalons du salon
+                tx.update(roomRef, "jalonsTermines", currentRoomMilestones + 1L)
+
+                // Maj chaque utilisateur
+                for ((uid, newPts) in newPoints) {
+                    tx.update(users.document(uid), "points", newPts)
+                }
+
+                for ((uid, newMilestones) in newUserMilestones) {
+                    tx.update(users.document(uid), "jalonsTermines", newMilestones)
                 }
 
             }.await()
@@ -430,8 +407,27 @@ class Database(
         }
     }
 
+    suspend fun addWorkedTimeToUser(uid: String, durationMs: Long) {
 
+        val userRef = users.document(uid)
 
+        store.runTransaction { tx ->
+            val snapUser = tx.get(userRef)
+            val old = snapUser.getLong("tempsTotal") ?: 0L
+            tx.update(userRef, "tempsTotal", old + durationMs)
+        }.await()
+    }
+
+    suspend fun addWorkedTimeToRoom(roomId: String, durationMs: Long) {
+
+        val roomRef = rooms.document(roomId)
+
+        store.runTransaction { tx ->
+            val snapRoom = tx.get(roomRef)
+            val old = snapRoom.getLong("tempsTotal") ?: 0L
+            tx.update(roomRef, "tempsTotal", old + durationMs)
+        }.await()
+    }
 
     suspend fun addExpToUser(uid: String, exp: Long): Pair<Int, Int> {
 
@@ -472,58 +468,82 @@ class Database(
         }.await()
     }
 
-
-    fun getJalonsOfRoom(roomId: String, onResult: (List<Jalon>) -> Unit) {
-//        rooms.document(roomId).collection("jalons").get()
-//            .addOnSuccessListener { result ->
-//                val jalons = result.map { doc ->
-//                    Jalon(
-//                        name = doc.getString("name") ?: "NameNotFound",
-//                        isDone = doc.getBoolean("isDone") ?: false
-//                    )
-//                }
-//                onResult(jalons)
-//            }
+    suspend fun getPlayersRankedByTime(): List<LeaderboardEntry> {
+        return users
+            .orderBy("tempsTotal", Query.Direction.DESCENDING)
+            .get()
+            .await()
+            .documents
+            .mapNotNull { doc ->
+                val email = doc.getString("email") ?: return@mapNotNull null
+                val value = doc.getLong("tempsTotal") ?: return@mapNotNull null
+                LeaderboardEntry(email, value)
+            }
     }
 
-    fun getRooms(): Flow<List<Room>> = callbackFlow {
-//        val col = store.collection("rooms")
-//        val reg = col.addSnapshotListener { snap, err ->
-//            if (err != null) {
-//                trySend(emptyList())
-//                return@addSnapshotListener
-//            }
-//
-//            val list = snap?.documents?.mapNotNull { doc ->
-//                val id = doc.id
-//                val name = doc.getString("name") ?: ""
-//                val owner = doc.getString("owner") ?: ""
-//                val description = doc.getString("description") ?: ""
-//                val status = (doc.getLong("status") ?: 0L).toInt()
-//                val members = doc.get("members") as? List<String> ?: emptyList()
-//                val jalons = (doc.get("jalons") as? List<Map<String, Any>>)
-//                    ?.map { map ->
-//                        Jalon(
-//                            name = map["name"] as? String ?: "",
-//                            isDone = map["isDone"] as? Boolean ?: false
-//                        )
-//                    } ?: emptyList()
-//
-//                Room(
-//                    id = id,
-//                    name = name,
-//                    owner = owner,
-//                    description = description,
-//                    status = status,
-//                    members = members,
-//                    jalons = jalons
-//                )
-//            }.orEmpty()
-//
-//            trySend(list)
-//        }
-//        awaitClose { reg.remove() }
+    suspend fun getPlayersRankedByPoints(): List<LeaderboardEntry> {
+        return users
+            .orderBy("points", Query.Direction.DESCENDING)
+            .get()
+            .await()
+            .documents
+            .mapNotNull { doc ->
+                val email = doc.getString("email") ?: return@mapNotNull null
+                val value = doc.getLong("points") ?: return@mapNotNull null
+                LeaderboardEntry(email, value)
+            }
     }
 
+    suspend fun getPlayersRankedByMilestones(): List<LeaderboardEntry> {
+        return users
+            .orderBy("jalonsTermines", Query.Direction.DESCENDING)
+            .get()
+            .await()
+            .documents
+            .mapNotNull { doc ->
+                val email = doc.getString("email") ?: return@mapNotNull null
+                val value = doc.getLong("jalonsTermines") ?: return@mapNotNull null
+                LeaderboardEntry(email, value)
+            }
+    }
+
+    suspend fun getRoomsRankedByTime(): List<LeaderboardEntry> {
+        return rooms
+            .orderBy("tempsTotal", Query.Direction.DESCENDING)
+            .get()
+            .await()
+            .documents
+            .mapNotNull { doc ->
+                val name = doc.getString("name") ?: return@mapNotNull null
+                val value = doc.getLong("tempsTotal") ?: return@mapNotNull null
+                LeaderboardEntry(name, value)
+            }
+    }
+
+    suspend fun getRoomsRankedByPoints(): List<LeaderboardEntry> {
+        return rooms
+            .orderBy("points", Query.Direction.DESCENDING)
+            .get()
+            .await()
+            .documents
+            .mapNotNull { doc ->
+                val name = doc.getString("name") ?: return@mapNotNull null
+                val value = doc.getLong("points") ?: return@mapNotNull null
+                LeaderboardEntry(name, value)
+            }
+    }
+
+    suspend fun getRoomsRankedByMilestones(): List<LeaderboardEntry> {
+        return rooms
+            .orderBy("jalonsTermines", Query.Direction.DESCENDING)
+            .get()
+            .await()
+            .documents
+            .mapNotNull { doc ->
+                val name = doc.getString("name") ?: return@mapNotNull null
+                val value = doc.getLong("jalonsTermines") ?: return@mapNotNull null
+                LeaderboardEntry(name, value)
+            }
+    }
 
 }

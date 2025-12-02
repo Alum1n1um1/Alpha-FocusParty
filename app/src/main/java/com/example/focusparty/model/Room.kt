@@ -8,5 +8,8 @@ data class Room(
     val status: Int=0,
     val members: List<String>,
     val jalons: List<Jalon>,
-    val timer: Timer = Timer()
+    val timer: Timer = Timer(),
+    val tempsTotal: Long = 0L,
+    val points: Int = 0,
+    val jalonsTermines: Int = 0
 )

@@ -10,7 +10,9 @@ data class User(
     val friends:List<String>,
     val rooms:List<String>,
     val comment:String,
-    val points:Int
+    val points:Int,
+    val tempsTotal: Long = 0L,             // temps total focus, en ms ou minutes
+    val jalonsTermines: Int = 0
 )
 
 val auth = FirebaseAuth.getInstance()
