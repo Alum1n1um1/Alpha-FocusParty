@@ -178,8 +178,10 @@ class RoomViewModel(
         viewModelScope.launch {
             val exp = 2500 * durationMs / 1000 / 60 / 30
             db.addExpToUser(uid, exp)
+            db.addExpToRoom(roomId, exp)
             db.addWorkedTimeToUser(uid, durationMs)
             db.addWorkedTimeToRoom(roomId, durationMs)
+
         }
 
         workedMs = Duration.ZERO

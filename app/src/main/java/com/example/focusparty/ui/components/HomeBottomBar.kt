@@ -10,6 +10,7 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
+import com.example.focusparty.ui.theme.*
 
 @Composable
 fun HomeBottomBar(
@@ -17,7 +18,8 @@ fun HomeBottomBar(
     onNavigate: (String) -> Unit
 ) {
     NavigationBar(
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = colorPurplelight1,
+        contentColor = colorPurpledark3,
         tonalElevation = 3.dp
     ) {
         NavigationBarItem(

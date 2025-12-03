@@ -13,3 +13,21 @@ data class Room(
     val points: Int = 0,
     val jalonsTermines: Int = 0
 )
+
+
+fun Room.computeLevel(totalMembersExp: Long): Int {
+    var totalExp = totalMembersExp + (jalonsTermines * 250L)
+
+    var level = 1
+    var remaining = totalExp
+
+    while (true) {
+        val required = 50L * level
+        if (remaining >= required) {
+            remaining -= required
+            level++
+        } else {
+            return level
+        }
+    }
+}

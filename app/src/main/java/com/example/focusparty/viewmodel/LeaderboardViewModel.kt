@@ -10,7 +10,7 @@ import kotlinx.coroutines.launch
 
 
 enum class LeaderboardTarget { PLAYERS, ROOMS }
-enum class LeaderboardMetric { TIME, POINTS, MILESTONES }
+enum class LeaderboardMetric { TIME, POINTS, MILESTONES, LEVEL }
 
 data class LeaderboardEntry(
     val name: String,
@@ -48,21 +48,23 @@ class LeaderboardViewModel (
     fun loadRanking() {
         viewModelScope.launch {
 
-            val entries: List<LeaderboardEntry> = when (_target.value) {
+            val entries: List<LeaderboardEntry> = when (target.value) {
 
                 LeaderboardTarget.PLAYERS -> {
-                    when (_metric.value) {
-                        LeaderboardMetric.TIME -> db.getPlayersRankedByTime()
-                        LeaderboardMetric.POINTS -> db.getPlayersRankedByPoints()
+                    when (metric.value) {
+                        LeaderboardMetric.TIME       -> db.getPlayersRankedByTime()
+                        LeaderboardMetric.POINTS     -> db.getPlayersRankedByPoints()
                         LeaderboardMetric.MILESTONES -> db.getPlayersRankedByMilestones()
+                        LeaderboardMetric.LEVEL      -> db.getPlayersRankedByLevel()
                     }
                 }
 
                 LeaderboardTarget.ROOMS -> {
-                    when (_metric.value) {
-                        LeaderboardMetric.TIME -> db.getRoomsRankedByTime()
-                        LeaderboardMetric.POINTS -> db.getRoomsRankedByPoints()
+                    when (metric.value) {
+                        LeaderboardMetric.TIME       -> db.getRoomsRankedByTime()
+                        LeaderboardMetric.POINTS     -> emptyList()              // non applicable
                         LeaderboardMetric.MILESTONES -> db.getRoomsRankedByMilestones()
+                        LeaderboardMetric.LEVEL      -> db.getRoomsRankedByLevel()
                     }
                 }
             }
@@ -70,6 +72,7 @@ class LeaderboardViewModel (
             _ranking.value = entries
         }
     }
+
 
     fun goToDestination(dest: String) {
         navController.navigate(dest)

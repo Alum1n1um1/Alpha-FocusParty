@@ -342,27 +342,29 @@ class Database(
 
         try {
             store.runTransaction { tx ->
+
                 val snapRoom = tx.get(roomRef)
-                if (!snapRoom.exists()) {
+                if (!snapRoom.exists())
                     throw IllegalStateException("Room introuvable : $roomId")
-                }
 
                 val jalons = snapRoom.get("jalons") as? List<Map<String, Any>>
                     ?: throw IllegalStateException("Champ 'jalons' absent ou invalide")
 
-                if (index !in jalons.indices) {
+                if (index !in jalons.indices)
                     throw IllegalArgumentException("Index jalon invalide : $index")
-                }
 
                 val members = snapRoom.get("members") as? List<String> ?: emptyList()
 
                 val currentRoomMilestones = (snapRoom.getLong("jalonsTermines") ?: 0L)
+                val currentRoomExp = (snapRoom.getLong("exp") ?: 0L)
+                val currentRoomLevel = (snapRoom.getLong("level") ?: 1L).toInt()
+
                 val userSnaps = members.associateWith { uid ->
                     val ref = users.document(uid)
                     ref to tx.get(ref)
                 }
 
-                // Maj du jalon
+                // --- Mise à jour du jalon ---
                 val updatedJalon = mapOf(
                     "name" to jalon.name,
                     "isDone" to jalon.isDone
@@ -370,42 +372,63 @@ class Database(
                 val updatedList = jalons.toMutableList()
                 updatedList[index] = updatedJalon
 
-                // Points
+                // --- Points des users ---
                 val newPoints = userSnaps.mapValues { (_, pair) ->
-                    val (_, snapUsuario) = pair
-                    (snapUsuario.getLong("points") ?: 0L) + 50L
+                    val (_, snapUser) = pair
+                    (snapUser.getLong("points") ?: 0L) + 50L
                 }
 
-                // Jalons terminés par user
+                // --- Jalons personnels des users ---
                 val newUserMilestones = userSnaps.mapValues { (_, pair) ->
-                    val (_, snapUsuario) = pair
-                    (snapUsuario.getLong("jalonsTermines") ?: 0L) + 1L
+                    val (_, snapUser) = pair
+                    (snapUser.getLong("jalonsTermines") ?: 0L) + 1L
                 }
 
-                // Maj la liste complète des jalons
-                tx.update(roomRef, "jalons", updatedList)
+                // --- EXP du salon ---
+                val newExp = currentRoomExp + 250L
 
-                // Incrémenter le compteur de jalons du salon
+                // Calcul du level du salon
+                var expR = newExp
+                var lvl = currentRoomLevel
+                while (true) {
+                    val required = 50 * lvl
+                    if (expR >= required) {
+                        expR -= required
+                        lvl++
+                    } else {
+                        break
+                    }
+                }
+
+                // --- Écritures Firestore (toutes après les lectures) ---
+
+                tx.update(roomRef, "jalons", updatedList)
                 tx.update(roomRef, "jalonsTermines", currentRoomMilestones + 1L)
 
-                // Maj chaque utilisateur
-                for ((uid, newPts) in newPoints) {
-                    tx.update(users.document(uid), "points", newPts)
+                // Update EXP + LEVEL du salon
+                tx.update(roomRef, mapOf(
+                    "exp" to newExp,
+                    "level" to lvl
+                ))
+
+                // Users : points
+                for ((uid, pts) in newPoints) {
+                    tx.update(users.document(uid), "points", pts)
                 }
 
-                for ((uid, newMilestones) in newUserMilestones) {
-                    tx.update(users.document(uid), "jalonsTermines", newMilestones)
+                // Users : jalons
+                for ((uid, newM) in newUserMilestones) {
+                    tx.update(users.document(uid), "jalonsTermines", newM)
                 }
 
             }.await()
-
-            Log.w("DEBUG_END_JALON", ">>> FIN transaction Firestore OK")
 
         } catch (e: Exception) {
             Log.e("DEBUG_END_JALON", "Erreur Firestore : ${e.message}", e)
             throw e
         }
     }
+
 
     suspend fun addWorkedTimeToUser(uid: String, durationMs: Long) {
 
@@ -467,6 +490,8 @@ class Database(
             Pair(currentLevel, currentExp)
         }.await()
     }
+
+
 
     suspend fun getPlayersRankedByTime(): List<LeaderboardEntry> {
         return users
@@ -545,5 +570,62 @@ class Database(
                 LeaderboardEntry(name, value)
             }
     }
+
+    suspend fun getPlayersRankedByLevel(): List<LeaderboardEntry> {
+        return users
+            .orderBy("level", Query.Direction.DESCENDING)
+            .get()
+            .await()
+            .documents
+            .mapNotNull { doc ->
+                val email = doc.getString("email") ?: return@mapNotNull null
+                val level = doc.getLong("level") ?: return@mapNotNull null
+                LeaderboardEntry(email, level)
+            }
+    }
+
+    suspend fun getRoomsRankedByLevel(): List<LeaderboardEntry> {
+        return rooms
+            .orderBy("level", Query.Direction.DESCENDING)
+            .get()
+            .await()
+            .documents
+            .mapNotNull { doc ->
+                val name = doc.getString("name") ?: return@mapNotNull null
+                val value = doc.getLong("level") ?: return@mapNotNull null
+                LeaderboardEntry(name, value)
+            }
+    }
+
+
+    suspend fun addExpToRoom(roomId: String, exp: Long) {
+        val ref = rooms.document(roomId)
+
+        store.runTransaction { tx ->
+            val snap = tx.get(ref)
+
+            var currentExp = (snap.getLong("exp") ?: 0L)
+            var currentLevel = (snap.getLong("level") ?: 1L).toInt()
+
+            currentExp += exp
+
+            var rem = currentExp
+            var lvl = currentLevel
+
+            while (true) {
+                val required = 50L * lvl
+                if (rem >= required) {
+                    rem -= required
+                    lvl++
+                } else break
+            }
+
+            tx.update(ref, mapOf(
+                "exp" to currentExp,
+                "level" to lvl
+            ))
+        }.await()
+    }
+
 
 }

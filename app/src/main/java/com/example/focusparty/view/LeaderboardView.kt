@@ -97,6 +97,14 @@ fun LeaderboardScreen(
                     onClick = { vm.setMetric(LeaderboardMetric.MILESTONES) },
                     label = { Text("Jalons") }
                 )
+
+                Spacer(Modifier.width(12.dp))
+
+                FilterChip(
+                    selected = metric == LeaderboardMetric.LEVEL,
+                    onClick = { vm.setMetric(LeaderboardMetric.LEVEL) },
+                    label = { Text("Niveaux") }
+                )
             }
 
             Spacer(Modifier.height(24.dp))
@@ -152,6 +160,7 @@ fun RowItem(index: Int, entry: LeaderboardEntry, metric: LeaderboardMetric) {
                     LeaderboardMetric.TIME -> formatTime(entry)
                     LeaderboardMetric.POINTS -> formatPoints(entry)
                     LeaderboardMetric.MILESTONES -> formatJalons(entry)
+                    LeaderboardMetric.LEVEL -> formatLevel(entry)
                 },
                 modifier = Modifier
                     .width(92.dp)
@@ -177,4 +186,8 @@ fun formatPoints(entry : LeaderboardEntry) :String {
 
 fun formatJalons(entry : LeaderboardEntry) :String {
     return "${entry.value} jalons"
+}
+
+fun formatLevel(entry: LeaderboardEntry): String {
+    return "Niv. ${entry.value}"
 }
