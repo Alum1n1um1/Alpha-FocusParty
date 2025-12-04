@@ -16,6 +16,7 @@ import java.util.Date
 import java.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import com.google.firebase.Timestamp
+import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.Query
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -76,8 +77,10 @@ class Database(
             ),
             "tempsTotal" to room.tempsTotal,
             "points" to room.points,
-            "jalonsTermines" to room.jalonsTermines
-        )
+            "jalonsTermines" to room.jalonsTermines,
+            "level" to room.level,
+            "exp" to room.exp
+            )
 
         doc.set(data)
     }
@@ -131,6 +134,9 @@ class Database(
                 val tempsTotal = doc.getLong("tempsTotal") ?: 0L
                 val points = (doc.getLong("points") ?: 0L).toInt()
                 val jalonsTermines = (doc.getLong("jalonsTermines") ?: 0L).toInt()
+                val level = (doc.getLong("level") ?: 1L).toInt()
+                val exp = (doc.getLong("exp") ?: 0L).toInt()
+
 
                 Room(
                     id = id,
@@ -143,7 +149,9 @@ class Database(
                     timer = timer,
                     tempsTotal = tempsTotal,
                     points = points,
-                    jalonsTermines = jalonsTermines
+                    jalonsTermines = jalonsTermines,
+                    level = level,
+                    exp = exp
                 )
             }.orEmpty()
 
@@ -203,6 +211,9 @@ class Database(
                 val tempsTotal = snap.getLong("tempsTotal") ?: 0L
                 val points = (snap.getLong("points") ?: 0L).toInt()
                 val jalonsTermines = (snap.getLong("jalonsTermines") ?: 0L).toInt()
+                val level = (snap.getLong("level") ?: 1L).toInt()
+                val exp = (snap.getLong("exp") ?: 0L).toInt()
+
 
                 trySend(
                     Room(
@@ -216,7 +227,9 @@ class Database(
                         timer = timer,
                         tempsTotal = tempsTotal,
                         points = points,
-                        jalonsTermines = jalonsTermines
+                        jalonsTermines = jalonsTermines,
+                        level = level,
+                        exp = exp
                     )
                 )
 
@@ -491,8 +504,6 @@ class Database(
         }.await()
     }
 
-
-
     suspend fun getPlayersRankedByTime(): List<LeaderboardEntry> {
         return users
             .orderBy("tempsTotal", Query.Direction.DESCENDING)
@@ -597,34 +608,68 @@ class Database(
             }
     }
 
-
-    suspend fun addExpToRoom(roomId: String, exp: Long) {
+    suspend fun addExpToRoom(roomId: String, expGained: Long) {
         val ref = rooms.document(roomId)
 
         store.runTransaction { tx ->
             val snap = tx.get(ref)
 
-            var currentExp = (snap.getLong("exp") ?: 0L)
-            var currentLevel = (snap.getLong("level") ?: 1L).toInt()
+            val currentExp = snap.getLong("exp") ?: 0L
+            val currentLevel = (snap.getLong("level") ?: 1L).toInt()
+            val currentPoints = snap.getLong("points") ?: 0L
 
-            currentExp += exp
-
-            var rem = currentExp
-            var lvl = currentLevel
+            var newExp = currentExp + expGained
+            var newLvl = currentLevel
+            var gainedLevels = 0
 
             while (true) {
-                val required = 50L * lvl
-                if (rem >= required) {
-                    rem -= required
-                    lvl++
+                val cost = newLvl * 50L
+                if (newExp >= cost) {
+                    newExp -= cost
+                    newLvl++
+                    gainedLevels++
                 } else break
             }
 
-            tx.update(ref, mapOf(
-                "exp" to currentExp,
-                "level" to lvl
-            ))
+            val newPoints = currentPoints + (gainedLevels * 250L)
+
+            tx.update(
+                ref,
+                mapOf(
+                    "exp" to newExp,
+                    "level" to newLvl,
+                    "points" to newPoints
+                )
+            )
         }.await()
+    }
+
+
+
+
+    fun getConnectedCount(uids: List<String>): Flow<Int> = callbackFlow {
+        if (uids.isEmpty()) {
+            trySend(0)
+            close()
+            return@callbackFlow
+        }
+
+        val chunks = uids.chunked(10) // whereIn limité à 10 valeurs
+
+        val listeners = chunks.map { chunk ->
+            store.collection("users")
+                .whereIn(FieldPath.documentId(), chunk)
+                .addSnapshotListener { snap, _ ->
+                    if (snap != null) {
+                        val count = snap.documents.count {
+                            it.getBoolean("isConnected") == true
+                        }
+                        trySend(count) // chaque chunk envoie un partiel
+                    }
+                }
+        }
+
+        awaitClose { listeners.forEach { it.remove() } }
     }
 
 

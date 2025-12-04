@@ -11,7 +11,9 @@ data class Room(
     val timer: Timer = Timer(),
     val tempsTotal: Long = 0L,
     val points: Int = 0,
-    val jalonsTermines: Int = 0
+    val jalonsTermines: Int = 0,
+    val level : Int = 0,
+    val exp : Int = 0
 )
 
 

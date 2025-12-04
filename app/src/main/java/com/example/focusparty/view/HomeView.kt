@@ -26,7 +26,9 @@ import com.example.focusparty.model.Room
 import com.example.focusparty.ui.components.CustomSurface
 import com.example.focusparty.ui.components.HomeBottomBar
 import com.example.focusparty.ui.components.SurfaceLevel
+import com.example.focusparty.ui.components.TreeLevelImage
 import com.example.focusparty.ui.theme.*
+import com.example.focusparty.utils.TreeLevelImage
 import com.example.focusparty.viewmodel.HomeViewModel
 import java.time.LocalDate
 import java.time.ZoneId
@@ -395,13 +397,13 @@ fun RoomItem(room:Room,vm: HomeViewModel){ // 1 salon, TODO : name + nombre de p
                 text = room.name,
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier
-                    .weight(1f)              // prend tout l’espace libre
-                    .padding(start = 4.dp)   // pas collé
+                    .weight(1f)
+                    .padding(start = 4.dp)
             )
             Row (
                 modifier = Modifier
-                    .width(72.dp)            // largeur fixe
-                    .padding(end = 4.dp),    // pas collé au bord
+                    .width(72.dp)
+                    .padding(end = 4.dp),
                 horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically
             ){
@@ -415,21 +417,20 @@ fun RoomItem(room:Room,vm: HomeViewModel){ // 1 salon, TODO : name + nombre de p
                         tint = MaterialTheme.colorScheme.secondary,
                         modifier = Modifier.size(20.dp)
                     )
+                    val rooms by vm.rooms.collectAsState()
+                    val counts by vm.connectedCounts.collectAsState()
                     Text(
-                        text="TODO",
+                        text = (counts[room.id] ?: 0).toString(),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.labelSmall
-                    ) // TODO : nombre de personnes dans le salon
+                    )
                 }
-                Icon(
-                    Icons.Default.Nature,
-                    contentDescription = "arbre ou plante",
-                    tint = MaterialTheme.colorScheme.tertiary,
-                    modifier = Modifier.size(24.dp)
+                TreeLevelImage(
+                    level = room.level,
+                    modifier = Modifier.size(80.dp)
                 )
             }
         }
-
     }
 }
 

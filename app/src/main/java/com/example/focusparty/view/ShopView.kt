@@ -32,7 +32,7 @@ fun ShopScreen(
                     bottom = padding.calculateBottomPadding()
                 )
         ) {
-
+                Text(text="TODO")
         }
     }
 }

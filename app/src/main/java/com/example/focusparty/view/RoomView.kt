@@ -45,6 +45,7 @@ import androidx.compose.material.icons.filled.SettingsSuggest
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.HorizontalAlignmentLine
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.focusparty.model.TimerState
@@ -91,7 +92,10 @@ fun RoomContent(
 {
     Column {
         SalonTopBar(vm, room)
-        DashBoard(vm)
+        DashBoard(
+            vm=vm,
+            room=room
+        )
         Pomodoro(
             vm=vm,
             room=room
@@ -149,7 +153,9 @@ fun ActionsMenu(vm: RoomViewModel,room : Room) {
     CustomSurface(level = SurfaceLevel.Low) {
         Column() {
             RoomStats(vm)
-            LazyColumn() {
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 itemsIndexed(items = room.jalons) { index, jalon ->
                     JalonItem(
                         jalon = jalon,
@@ -164,11 +170,136 @@ fun ActionsMenu(vm: RoomViewModel,room : Room) {
 }
 
 @Composable
-fun DashBoard(vm: RoomViewModel) {
+fun DashBoard(
+    vm: RoomViewModel,
+    room: Room
+) {
+    CustomSurface(
+        level = SurfaceLevel.Low,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        tonalElevation = 3.dp
+    ) {
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            TreeLevelImage(
+                level = room.level,
+                modifier = Modifier.size(140.dp)
+            )
+
+            Spacer(Modifier.width(16.dp))
+
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+
+                // Niveau
+                Text(
+                    text = "Niveau ${room.level}",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                // Calcul progression EXP interne au niveau
+                val currentExp = room.exp
+                val requiredExp = 50 * room.level
+                val expProgress = (currentExp.toFloat() / requiredExp.toFloat())
+                    .coerceIn(0f, 1f)
+
+                // Barre d'expérience
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    LinearProgressIndicator(
+                        progress = expProgress,
+                        modifier = Modifier.fillMaxWidth(),
+                        color = MaterialTheme.colorScheme.primary,
+                        trackColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                    Text(
+                        text = "$currentExp / $requiredExp EXP",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
 
 
+                // Statuts rapides
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
 
+                    // Temps total travaillé
+                    StatChip(
+                        label = "Temps",
+                        value = formatDuration(room.tempsTotal),
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+
+                    // Points
+                    StatChip(
+                        label = "Points",
+                        value = room.points.toString(),
+                        color = MaterialTheme.colorScheme.tertiary
+                    )
+
+                    // Jalons terminés
+                    StatChip(
+                        label = "Jalons",
+                        value = room.jalonsTermines.toString(),
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+        }
+    }
 }
+
+@Composable
+fun StatChip(
+    label: String,
+    value: String,
+    color: Color
+) {
+    Surface(
+        color = color.copy(alpha = 0.15f),
+        tonalElevation = 2.dp,
+        shape = MaterialTheme.shapes.small
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = color
+            )
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyMedium,
+                color = color
+            )
+        }
+    }
+}
+
+fun formatDuration(ms: Long): String {
+    if (ms <= 0) return "0m"
+    val totalMinutes = ms / 60000
+    val hours = totalMinutes / 60
+    val minutes = totalMinutes % 60
+    return if (hours > 0) "${hours}h${minutes}m" else "${minutes}m"
+}
+
 
 @Composable
 fun RoomStats(vm: RoomViewModel) {

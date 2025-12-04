@@ -16,6 +16,29 @@ class HomeViewModel(
     val rooms = db.getRoomsOf(uid).stateIn(
         viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList()
     )
+    val connectedCounts: StateFlow<Map<String, Int>> =
+        rooms.flatMapLatest { roomList ->
+
+            if (roomList.isEmpty()) {
+                flowOf(emptyMap())
+            } else {
+                // Un flux par room
+                val flows = roomList.map { room ->
+                    db.getConnectedCount(room.members)
+                        .map { count -> room.id to count }
+                }
+
+                combine(flows) { array ->
+                    array.toMap() // Map<roomId, count>
+                }
+            }
+
+        }.stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5_000),
+            emptyMap()
+        )
+
     val events = db.getEventsOf(uid).stateIn(
         viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList()
     )
@@ -25,6 +48,9 @@ class HomeViewModel(
     val level = _level
     private val _exp = MutableStateFlow(0)
     val exp = _exp
+
+
+
 
     fun GoToCalendar(){
         goToDestination("Calendar")
@@ -83,4 +109,6 @@ class HomeViewModel(
     fun goToDestination(dest: String) {
         navController.navigate(dest)
     }
+
+
 }
