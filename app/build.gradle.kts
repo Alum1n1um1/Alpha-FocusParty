@@ -53,6 +53,7 @@ dependencies {
     implementation(libs.androidx.navigation.runtime.ktx)
     implementation(libs.androidx.tv.material)
     implementation(libs.androidx.ui.graphics)
+    implementation(libs.androidx.lifecycle.process)
     // Compose
     val composeBom = platform("androidx.compose:compose-bom:2025.10.01")
     implementation(composeBom)

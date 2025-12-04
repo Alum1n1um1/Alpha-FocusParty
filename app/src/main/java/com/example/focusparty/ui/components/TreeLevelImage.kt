@@ -5,7 +5,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.foundation.Image
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
-import com.example.focusparty.utils.treeDrawableForLevel
 
 
 @Composable

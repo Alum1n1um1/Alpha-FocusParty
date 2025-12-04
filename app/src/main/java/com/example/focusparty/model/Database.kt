@@ -18,6 +18,7 @@ import kotlin.time.Duration.Companion.milliseconds
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.Query
+import kotlin.math.max
 import kotlin.time.Duration.Companion.milliseconds
 
 
@@ -48,7 +49,8 @@ class Database(
             "first_connection" to true,
             "points" to 500,
             "tempsTotal" to 0L,
-            "jalonsTermines" to 0
+            "jalonsTermines" to 0,
+            "isConnected" to false
         )
         users.document(uid).set(user)
     }
@@ -654,22 +656,39 @@ class Database(
             return@callbackFlow
         }
 
-        val chunks = uids.chunked(10) // whereIn limité à 10 valeurs
+        val now: () -> Long = { System.currentTimeMillis() }
+        val ttl = 90000L // 90 sec
+
+        val chunks = uids.chunked(10)
 
         val listeners = chunks.map { chunk ->
-            store.collection("users")
+            store.collection("Users")
                 .whereIn(FieldPath.documentId(), chunk)
                 .addSnapshotListener { snap, _ ->
                     if (snap != null) {
-                        val count = snap.documents.count {
-                            it.getBoolean("isConnected") == true
-                        }
-                        trySend(count) // chaque chunk envoie un partiel
+
+                        val count = max(0,(snap.documents.count { doc ->
+                            val lastSeen = doc.getTimestamp("lastSeen")?.toDate()?.time ?: 0L
+                            (now() - lastSeen) < ttl
+                        }-1)) // On ne veut que les autres utilisateurs
+
+                        trySend(count)
                     }
                 }
         }
 
         awaitClose { listeners.forEach { it.remove() } }
+    }
+
+
+    suspend fun setUserConnected(uid: String, value: Boolean) {
+        users.document(uid)
+            .update("isConnected", value)
+            .await()
+    }
+
+    suspend fun updateLastSeen(uid: String) {
+        users.document(uid).update("lastSeen", com.google.firebase.Timestamp.now()).await()
     }
 
 

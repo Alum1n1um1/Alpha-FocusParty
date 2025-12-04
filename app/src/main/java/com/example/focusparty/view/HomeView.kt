@@ -9,7 +9,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.Nature
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.material3.HorizontalDivider
@@ -28,7 +27,6 @@ import com.example.focusparty.ui.components.HomeBottomBar
 import com.example.focusparty.ui.components.SurfaceLevel
 import com.example.focusparty.ui.components.TreeLevelImage
 import com.example.focusparty.ui.theme.*
-import com.example.focusparty.utils.TreeLevelImage
 import com.example.focusparty.viewmodel.HomeViewModel
 import java.time.LocalDate
 import java.time.ZoneId
@@ -147,14 +145,7 @@ fun HomeTopBar(vm: HomeViewModel) {
                 contentAlignment = Alignment.CenterEnd
             ) {
                 Row {
-                    IconButton(
-                        onClick = { vm.GoToUserMenu() },
-                        colors = IconButtonDefaults.iconButtonColors(
-                            contentColor = MaterialTheme.colorScheme.onPrimary
-                        )
-                    ) {
-                        Icon(Icons.Default.AccountCircle, contentDescription = "Compte")
-                    }
+                    UserMenuButton(vm)
 
                     IconButton(
                         onClick = { vm.ShareApp() },
@@ -169,6 +160,58 @@ fun HomeTopBar(vm: HomeViewModel) {
         }
     }
 }
+
+@Composable
+fun UserMenuButton(vm: HomeViewModel) {
+
+    var expanded by remember { mutableStateOf(false) }
+
+    Box {
+        IconButton(
+            onClick = { expanded = true },
+            colors = IconButtonDefaults.iconButtonColors(
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            )
+        ) {
+            Icon(Icons.Default.AccountCircle, contentDescription = "Compte")
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            DropdownMenuItem(
+                text = { Text("Changer avatar") },
+                onClick = {
+                    expanded = false
+                    vm.goToAvatarChanger()
+                }
+            )
+            DropdownMenuItem(
+                text = { Text("Stats") },
+                onClick = {
+                    expanded = false
+                    vm.goToStats()
+                }
+            )
+            DropdownMenuItem(
+                    text = { Text("Paramètres") },
+            onClick = {
+                expanded = false
+                vm.goToSettings()
+            }
+            )
+            DropdownMenuItem(
+                text = { Text("Logout") },
+                onClick = {
+                    expanded = false
+                    vm.logout()
+                }
+            )
+        }
+    }
+}
+
 
 @Composable
 fun Stats(vm: HomeViewModel){
@@ -380,7 +423,7 @@ fun CreateRoomDialog(
 }
 
 @Composable
-fun RoomItem(room:Room,vm: HomeViewModel){ // 1 salon, TODO : name + nombre de personnes dans le salon + lvl du salon (avec icone d'arbre)
+fun RoomItem(room:Room,vm: HomeViewModel){
 
     CustomSurface(
         level = SurfaceLevel.High,

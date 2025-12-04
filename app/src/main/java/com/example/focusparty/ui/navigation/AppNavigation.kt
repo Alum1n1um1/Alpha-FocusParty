@@ -11,11 +11,14 @@ import androidx.navigation.compose.composable
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
+import com.example.focusparty.MyApplication
 import com.example.focusparty.model.Database
 import com.example.focusparty.model.factories.CalendarViewModelFactory
+import com.example.focusparty.model.uid
 import com.example.focusparty.viewmodel.factories.*
 import com.example.focusparty.view.*
 import com.example.focusparty.viewmodel.*
+import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun AppNavigation(
@@ -24,7 +27,7 @@ fun AppNavigation(
 ) {
     NavHost(
         navController = navController,
-        startDestination = "Home"
+        startDestination = "Login"  // TODO: Remettre Login avant d'envoyer
     ) {
 
 
@@ -98,10 +101,17 @@ fun AppNavigation(
 
             LaunchedEffect(success) {
                 if (success) {
+                    db.setUserConnected(uid,true)
+
+                    if (uid != null) {
+                        MyApplication.lifecycleListener.startHeartbeatFor(uid)
+                    }
+
                     navController.navigate("Home") {
                         popUpTo("Login") { inclusive = true }
                         launchSingleTop = true
                     }
+
                 }
             }
         }
@@ -126,6 +136,39 @@ fun AppNavigation(
                     }
                 }
             }
+        }
+
+        composable("Settings") { //TODO :
+            val app = LocalContext.current.applicationContext as Application
+
+            val vm: CalendarViewModel = viewModel(
+                factory = CalendarViewModelFactory(db, navController, app)
+            )
+            CalendarScreen (
+                vm = vm
+            )
+        }
+
+        composable("Stats") {//TODO :
+            val app = LocalContext.current.applicationContext as Application
+
+            val vm: CalendarViewModel = viewModel(
+                factory = CalendarViewModelFactory(db, navController, app)
+            )
+            CalendarScreen (
+                vm = vm
+            )
+        }
+
+        composable("AvatarChanger") {//TODO :
+            val app = LocalContext.current.applicationContext as Application
+
+            val vm: CalendarViewModel = viewModel(
+                factory = CalendarViewModelFactory(db, navController, app)
+            )
+            CalendarScreen (
+                vm = vm
+            )
         }
     }
 }

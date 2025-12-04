@@ -2,8 +2,11 @@ package com.example.focusparty.viewmodel
 
 import androidx.lifecycle.*
 import androidx.navigation.NavController
+import com.example.focusparty.MyApplication
 import com.example.focusparty.model.*
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -85,7 +88,6 @@ class HomeViewModel(
     }
 
     fun createRoom(name: String, description: String, jalons: List<Jalon>) {
-        val uid = auth.currentUser?.uid ?: return
 
         val newRoom = Room(
             name = name,
@@ -108,6 +110,37 @@ class HomeViewModel(
 
     fun goToDestination(dest: String) {
         navController.navigate(dest)
+    }
+
+    fun goToStats() {
+        TODO("Not yet implemented")
+    }
+
+    fun goToAvatarChanger() {
+        TODO("Not yet implemented")
+    }
+
+    fun logout() {
+        if (uid != null) {
+            MyApplication.lifecycleListener.stopHeartbeat()
+
+            CoroutineScope(Dispatchers.IO).launch {
+                db.setUserConnected(uid, false)
+            }
+        }
+
+        auth.signOut()
+
+        navController.navigate("Login") {
+            popUpTo("Home") { inclusive = true }
+            launchSingleTop = true
+        }
+    }
+
+
+
+    fun goToSettings() {
+        navController.navigate("Settings")
     }
 
 

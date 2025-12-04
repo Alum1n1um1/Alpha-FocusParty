@@ -13,12 +13,11 @@ class Activity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val db = Database.Companion.getInstance()
-
         setContent {
+            val db = Database.Companion.getInstance()
             val navController = rememberNavController()
 
-            AppTheme { ///////////////////////////// UTILISER FIGMA (modele pour générer des thèmes) // voir aussi material d(esign)
+            AppTheme {
                 AppNavigation(
                     navController = navController,
                     db = db
@@ -27,3 +26,5 @@ class Activity : ComponentActivity() {
         }
     }
 }
+
+

@@ -1,4 +1,4 @@
-package com.example.focusparty.utils
+package com.example.focusparty.ui.components
 
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image
@@ -6,7 +6,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.res.painterResource
 import androidx.annotation.DrawableRes
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.imageResource
