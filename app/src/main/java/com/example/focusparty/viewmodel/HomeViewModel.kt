@@ -70,10 +70,8 @@ class HomeViewModel(
         goToDestination("Calendar")
     }
 
-    fun GoToUserMenu(){
-    }
-
     fun ShareApp(){
+        // TODO
     }
 
     fun GoToRoom(room:Room){

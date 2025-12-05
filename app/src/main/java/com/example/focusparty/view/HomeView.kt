@@ -46,7 +46,7 @@ fun HomeScreen(
         },
         bottomBar = {
             HomeBottomBar(
-                currentDestination = "home",
+                currentDestination = "Home",
                 onNavigate = { dest -> navController.navigate(dest) }
             )
         }
@@ -207,6 +207,7 @@ fun Stats(vm: HomeViewModel){
     val exp by vm.exp.collectAsState()
     val progress = (exp/maxExp)
     val points by vm.availablePoints.collectAsState()
+    val tint = MaterialTheme.colorScheme.onTertiary
     LaunchedEffect(Unit) {
         vm.loadLevel()
     }
@@ -218,7 +219,7 @@ fun Stats(vm: HomeViewModel){
     }
     CustomSurface(
         level = SurfaceLevel.High,
-        color = colorPurplelight2,
+        color = MaterialTheme.colorScheme.tertiary,
         modifier = Modifier
             .fillMaxSize()
             .padding(10.dp)
@@ -233,36 +234,43 @@ fun Stats(vm: HomeViewModel){
             ) {
                 Row(
                     modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)   // évite que les textes touchent les bords
+                        .height(40.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+
+                    // Texte gauche
                     Text(
                         text = "LVL$level",
                         modifier = Modifier
-                            .width(60.dp)
-                            .padding(4.dp),
+                            .weight(1f)                 // prend la même largeur que l'autre texte
+                            .padding(end = 8.dp),
                         textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = tint,
+                        fontSize = 20.sp
                     )
 
+                    // Progress bar centrée
                     LinearProgressIndicator(
                         progress = { progress },
-                        color = MaterialTheme.colorScheme.secondary,
+                        color = tint,
                         trackColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                         strokeCap = ProgressIndicatorDefaults.LinearStrokeCap,
                         modifier = Modifier
-                            .weight(1f)
+                            .weight(2f)                 // la barre prend 2x plus de place que les textes
                             .height(12.dp)
                     )
 
+                    // Texte droite
                     Text(
-                        text = "LVL" + (level + 1).toString(),
+                        text = "LVL${level + 1}",
                         modifier = Modifier
-                            .width(60.dp)
-                            .padding(4.dp),
+                            .weight(1f)                 // même largeur que le texte de gauche
+                            .padding(start = 8.dp),
                         textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = tint,
+                        fontSize = 20.sp
                     )
                 }
                 Row(
@@ -273,8 +281,10 @@ fun Stats(vm: HomeViewModel){
                 ) {
                     Text(
                         text = "Points disponibles : $points",
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(start=12.dp)
+                        color = tint,
+                        modifier = Modifier.padding(start=12.dp),
+                        fontSize = 20.sp
+
                     )
 
                 }
@@ -288,8 +298,10 @@ fun Stats(vm: HomeViewModel){
                 ) {
                     Text(
                         text = "Temps révisé : ${formatDuration(time)}",
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(start=12.dp))
+                        color = MaterialTheme.colorScheme.onTertiary,
+                        modifier = Modifier.padding(start=12.dp),
+                        fontSize = 20.sp
+                    )
                 }
             }
             //Canvas ??
@@ -502,7 +514,8 @@ fun EventItem(event:Event){ // 1 event, TODO : name + deadline + priorité (urge
                     color=if (event.priority != "URG") {MaterialTheme.colorScheme.onSurface} else {MaterialTheme.colorScheme.onError},
                     modifier = Modifier
                         .fillMaxWidth(),
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    fontSize = 20.sp
                 )
             }
             Box(
@@ -518,7 +531,8 @@ fun EventItem(event:Event){ // 1 event, TODO : name + deadline + priorité (urge
                     color= if (event.priority != "URG") {MaterialTheme.colorScheme.onSurfaceVariant} else {MaterialTheme.colorScheme.onError},
                     modifier = Modifier
                         .fillMaxWidth(),
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    fontSize = 20.sp
                 )
             }
             Box(
@@ -529,7 +543,8 @@ fun EventItem(event:Event){ // 1 event, TODO : name + deadline + priorité (urge
                     color=if (event.priority != "URG") {MaterialTheme.colorScheme.onSurface} else {MaterialTheme.colorScheme.onError},
                     modifier = Modifier
                         .fillMaxWidth(),
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    fontSize = 20.sp
                 )
             }
         }

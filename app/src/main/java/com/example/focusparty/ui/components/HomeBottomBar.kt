@@ -1,5 +1,6 @@
 package com.example.focusparty.ui.components
 
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Home
@@ -8,7 +9,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.example.focusparty.ui.theme.*
 
@@ -18,29 +21,53 @@ fun HomeBottomBar(
     onNavigate: (String) -> Unit
 ) {
     NavigationBar(
-        containerColor = MaterialTheme.colorScheme.primary,
-        contentColor = MaterialTheme.colorScheme.onPrimary,
-        tonalElevation = 3.dp
+        containerColor = MaterialTheme.colorScheme.primary
     ) {
-        NavigationBarItem(
-            selected = currentDestination == "leaderboard",
-            onClick = { onNavigate("leaderboard") },
-            icon = { Icon(Icons.Default.EmojiEvents, "Leaderboard") },
-            alwaysShowLabel = false
+
+        BottomItem(
+            selected = currentDestination == "Leaderboard",
+            icon = Icons.Default.EmojiEvents,
+            onClick = { onNavigate("Leaderboard") }
         )
 
-        NavigationBarItem(
-            selected = currentDestination == "home",
-            onClick = { onNavigate("home") },
-            icon = { Icon(Icons.Default.Home, "Home") },
-            alwaysShowLabel = false
+        BottomItem(
+            selected = currentDestination == "Home",
+            icon = Icons.Default.Home,
+            onClick = { onNavigate("Home") }
         )
 
-        NavigationBarItem(
-            selected = currentDestination == "shop",
-            onClick = { onNavigate("shop") },
-            icon = { Icon(Icons.Default.ShoppingCart, "Boutique") },
-            alwaysShowLabel = false
+        BottomItem(
+            selected = currentDestination == "Shop",
+            icon = Icons.Default.ShoppingCart,
+            onClick = { onNavigate("Shop") }
         )
     }
+}
+
+@Composable
+private fun RowScope.BottomItem(
+    selected: Boolean,
+    icon: ImageVector,
+    onClick: () -> Unit
+) {
+    NavigationBarItem(
+        selected = selected,
+        onClick = onClick,
+        alwaysShowLabel = false,
+        icon = {
+            Icon(
+                icon,
+                contentDescription = null,
+                tint = if (selected)
+                    MaterialTheme.colorScheme.onPrimary
+                else
+                    MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
+            )
+        },
+        colors = NavigationBarItemDefaults.colors(
+            selectedIconColor = MaterialTheme.colorScheme.onPrimary,
+            unselectedIconColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
+            indicatorColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.5f)
+        )
+    )
 }

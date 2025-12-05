@@ -86,7 +86,10 @@ fun RoomContent(
     vm: RoomViewModel,
     room: Room)
 {
-    Column {
+    Column (
+        modifier = Modifier
+            .background(MaterialTheme.colorScheme.background)
+    ){
         SalonTopBar(vm, room)
         DashBoard(
             vm=vm,
@@ -106,6 +109,8 @@ fun SalonTopBar(
     room: Room
 ) {
 
+    val tint = MaterialTheme.colorScheme.onPrimary
+
     Surface(
         color = MaterialTheme.colorScheme.primary,
         shadowElevation = 4.dp
@@ -117,28 +122,24 @@ fun SalonTopBar(
                 .windowInsetsPadding(WindowInsets.statusBars),
             verticalAlignment = Alignment.CenterVertically
         ) {
-
-            // --- Zone gauche ---
             Box(
                 modifier = Modifier.weight(1f),
                 contentAlignment = Alignment.CenterStart
             ) {
-                // Si tu veux un bouton retour plus tard, mets-le ici
+                // bouton retour ?
             }
 
-            // --- Zone centrale ---
             Box(
                 modifier = Modifier.weight(1f),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = room.name,
-                    color = MaterialTheme.colorScheme.onPrimary,
+                    color = tint,
                     style = MaterialTheme.typography.titleMedium
                 )
             }
 
-            // --- Zone droite ---
             Box(
                 modifier = Modifier.weight(1f),
                 contentAlignment = Alignment.CenterEnd
@@ -160,14 +161,14 @@ fun SalonTopBar(
 
                     Text(
                         text = "$connectedCount",
-                        color = MaterialTheme.colorScheme.onPrimary,
+                        color = tint,
                         style = MaterialTheme.typography.titleMedium
                     )
 
                     Icon(
                         imageVector = Icons.Default.CoPresent,
                         contentDescription = "Personnes connectées",
-                        tint = MaterialTheme.colorScheme.onPrimary,
+                        tint = tint,
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -280,7 +281,7 @@ fun DashBoard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp),
-        tonalElevation = 3.dp
+        tonalElevation = 10.dp
     ) {
 
         Row(
@@ -349,14 +350,14 @@ fun DashBoard(
                     StatChip(
                         label = "Points",
                         value = room.points.toString(),
-                        color = MaterialTheme.colorScheme.tertiary
+                        color = MaterialTheme.colorScheme.secondary
                     )
 
                     // Jalons terminés
                     StatChip(
                         label = "Jalons",
                         value = room.jalonsTermines.toString(),
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.secondary
                     )
                 }
             }
@@ -467,7 +468,8 @@ fun JalonItem(
                 IconButton(onClick = onSettings) {
                     Icon(
                         Icons.Default.SettingsSuggest,
-                        contentDescription = "Paramètres du jalon"
+                        contentDescription = "Paramètres du jalon",
+                        tint=onSurfaceColor
                     )
                 }
             }
@@ -482,57 +484,57 @@ fun Pomodoro(
 ) {
     CustomSurface(
         level = SurfaceLevel.High,
-        color = MaterialTheme.colorScheme.surfaceVariant,
+        color = MaterialTheme.colorScheme.tertiaryContainer,
         modifier = Modifier
             .fillMaxWidth()
             .padding(12.dp)
-    ){
+    ) {
         val remaining by vm.remaining.collectAsState()
         val timer = room.timer
         val state = timer.state
+        val onTertiary = MaterialTheme.colorScheme.onTertiaryContainer
 
-        // ---------------------------------------------------------
-        // A. Aucun timer (state = NONE)
-        // ---------------------------------------------------------
         if (state == TimerState.NONE) {
 
             var hours by remember { mutableStateOf(0) }
-            var minutes by remember { mutableStateOf(30) } /////////////////////CHANGER POUR 25
-
+            var minutes by remember { mutableStateOf(25) }
 
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp)
             ) {
-                Box(
-                    modifier = Modifier.weight(1f)
-                ) {
+                Box(Modifier.weight(5f)) {
                     NumberPicker(
                         label = "Heures",
                         value = hours,
-                        range = 0..5
-                    ) {
-                        hours = it
-                    }
+                        range = 0..5,
+                        color = onTertiary
+                    ) { hours = it }
                 }
-                Box(
-                    modifier = Modifier.weight(1f)
-                ) {
-                    NumberPicker(label = "Minutes", value = minutes, range = 0..59) {
-                        minutes = it
-                    }
+
+                Box(Modifier.weight(5f)) {
+                    NumberPicker(
+                        label = "Minutes",
+                        value = minutes,
+                        range = 0..59,
+                        color = onTertiary
+                    ) { minutes = it }
                 }
+
                 Box(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(4f),
                     contentAlignment = Alignment.Center
                 ) {
                     Button(
                         onClick = {
                             val totalMinutes = hours * 60 + minutes
-                            val duration = Duration.ofMinutes(totalMinutes.toLong())
-                            vm.startPomodoro(duration)
-                        }
+                            vm.startPomodoro(Duration.ofMinutes(totalMinutes.toLong()))
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.tertiary,
+                            contentColor = MaterialTheme.colorScheme.onTertiary
+                        )
                     ) {
                         Text("Lancer")
                     }
@@ -540,86 +542,97 @@ fun Pomodoro(
             }
         }
 
-        // ---------------------------------------------------------
-        // Préparation valeurs communes RUNNING / PAUSED
-        // ---------------------------------------------------------
         val totalMs = timer.durationMs
         val remainingMs = remaining.toMillis()
         val doneMs = (totalMs - remainingMs).coerceAtLeast(0L)
         val progress = (doneMs.toFloat() / totalMs.toFloat()).coerceIn(0f, 1f)
-
-
         val m = remaining.toMinutes()
         val s = remaining.toSeconds() % 60
 
-        // ---------------------------------------------------------
-        // B. Timer en pause (state = PAUSED)
-        // ---------------------------------------------------------
         if (state == TimerState.PAUSED) {
-
-            Column(
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
-
-                LinearProgressIndicator(
-                    progress = progress,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Text(
-                    text = "%02d:%02d".format(m, s),
-                    style = MaterialTheme.typography.headlineMedium
-                )
-
-                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Button(onClick = { vm.resumePomodoro() }) {
-                        Text("Reprendre")
-                    }
-                    Button(onClick = { vm.stopPomodoro() }) {
-                        Text("Arrêter")
-                    }
-                }
-            }
+            PomodoroRunningUI(
+                progress = progress,
+                timeText = "%02d:%02d".format(m, s),
+                onColor = onTertiary,
+                colors=ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.tertiary,
+                    contentColor = MaterialTheme.colorScheme.onTertiary
+                ),
+                onPrimary = { vm.resumePomodoro() },
+                onSecondary = { vm.stopPomodoro() },
+                primaryText = "Reprendre",
+                secondaryText = "Arrêter"
+            )
         }
 
-        // ---------------------------------------------------------
-        // C. Timer en cours (state = RUNNING)
-        // ---------------------------------------------------------
         if (state == TimerState.RUNNING) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
+            PomodoroRunningUI(
+                progress = progress,
+                timeText = "%02d:%02d".format(m, s),
+                onColor = onTertiary,
+                colors=ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.tertiary,
+                    contentColor = MaterialTheme.colorScheme.onTertiary
+                ),
+                onPrimary = { vm.pausePomodoro() },
+                onSecondary = { vm.stopPomodoro() },
+                primaryText = "Pause",
+                secondaryText = "Arrêter"
+            )
+        }
+    }
+}
+
+@Composable
+private fun PomodoroRunningUI(
+    progress: Float,
+    timeText: String,
+    onColor: Color,
+    colors: ButtonColors,
+    onPrimary: () -> Unit,
+    onSecondary: () -> Unit,
+    primaryText: String,
+    secondaryText: String
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        LinearProgressIndicator(
+            progress = progress,
+            modifier = Modifier.fillMaxWidth(),
+            color = MaterialTheme.colorScheme.tertiary,
+            trackColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.25f)
+        )
+
+        Text(
+            text = timeText,
+            style = MaterialTheme.typography.headlineMedium,
+            color = onColor
+        )
+
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            Button(
+                onClick = onPrimary,
+                colors = colors
             ) {
-
-                LinearProgressIndicator(
-                    progress = progress,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
                 Text(
-                    text = "%02d:%02d".format(m, s),
-                    style = MaterialTheme.typography.headlineMedium
-                )
-
-                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Button(onClick = { vm.pausePomodoro() }) {
-                        Text("Pause")
-                    }
-                    Button(onClick = { vm.stopPomodoro() }) {
-                        Text("Arrêter")
-                    }
-                }
+                    primaryText)
+            }
+            Button(
+                onClick = onSecondary,
+                colors = colors
+            ) {
+                Text(
+                    secondaryText)
             }
         }
     }
 }
+
 
 
 @Composable
@@ -627,6 +640,7 @@ fun NumberPicker(
     label: String,
     value: Int,
     range: IntRange,
+    color: Color,
     onValueChange: (Int) -> Unit
 ) {
     Column(
@@ -634,7 +648,7 @@ fun NumberPicker(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
 
-        Text(label, style = MaterialTheme.typography.bodyMedium)
+        Text(label, style = MaterialTheme.typography.bodyMedium, color = color)
 
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -649,14 +663,16 @@ fun NumberPicker(
             ) {
                 Icon(
                     imageVector = Icons.Default.KeyboardArrowDown,
-                    contentDescription = null
+                    contentDescription = null,
+                    tint = color
                 )
             }
 
             Text(
                 text = value.toString(),
                 style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier.padding(horizontal = 16.dp),
+                color = color
             )
 
             IconButton(
@@ -667,12 +683,14 @@ fun NumberPicker(
             ) {
                 Icon(
                     imageVector = Icons.Default.KeyboardArrowUp,
-                    contentDescription = null
+                    contentDescription = null,
+                    tint = color
                 )
             }
         }
     }
 }
+
 
 @Composable
 fun MemberItem(
@@ -680,7 +698,7 @@ fun MemberItem(
     onAddFriend: () -> Unit,
     onMotivate: () -> Unit
 ) {
-
+    val tint = MaterialTheme.colorScheme.onSecondary
 
     Row(
         modifier = Modifier
@@ -694,7 +712,7 @@ fun MemberItem(
         ) {
             Text(
                 text = user.email,
-                color = MaterialTheme.colorScheme.onSecondary,
+                color = tint,
                 style = MaterialTheme.typography.labelSmall,
                 fontSize = 20.sp
             )
@@ -706,7 +724,7 @@ fun MemberItem(
             Icon(
                 imageVector = Icons.Default.PersonAdd,
                 contentDescription = "Ajouter en ami",
-                tint = MaterialTheme.colorScheme.onSecondary
+                tint = tint
             )
         }
         IconButton(
@@ -716,7 +734,7 @@ fun MemberItem(
             Icon(
                 imageVector = Icons.Default.EmojiEmotions,
                 contentDescription = "Motiver",
-                tint = MaterialTheme.colorScheme.onSecondary
+                tint = tint
             )
         }
 

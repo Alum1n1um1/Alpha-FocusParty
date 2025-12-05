@@ -423,7 +423,6 @@ class Database(
         }
     }
 
-
     suspend fun addWorkedTimeToUser(uid: String, durationMs: Long) {
 
         val userRef = users.document(uid)
@@ -625,9 +624,6 @@ class Database(
         }.await()
     }
 
-
-
-
     fun getConnectedCount(uids: List<String>): Flow<Int> = callbackFlow {
         if (uids.isEmpty()) {
             trySend(0)
@@ -659,7 +655,6 @@ class Database(
         awaitClose { listeners.forEach { it.remove() } }
     }
 
-
     suspend fun setUserConnected(uid: String, value: Boolean) {
         users.document(uid)
             .update("isConnected", value)
@@ -685,6 +680,13 @@ class Database(
             .addSnapshotListener { snap, _ ->
 
                 if (snap != null && snap.exists()) {
+
+                    val prefsMap = snap.get("Preferences") as? Map<*, *> ?: emptyMap<String, Any>()
+                    val prefs = UserPreferences(
+                        darkMode = prefsMap["darkMode"] as? Boolean ?: false,
+                        notifications = prefsMap["notifications"] as? Boolean ?: true
+                    )
+
                     val user = User(
                         uid = snap.getString("uid") ?: uid,
                         email = snap.getString("email") ?: "",
@@ -696,10 +698,12 @@ class Database(
                         points = snap.getLong("points")?.toInt() ?: 0,
                         tempsTotal = snap.getLong("tempsTotal") ?: 0L,
                         jalonsTermines = snap.getLong("jalonsTermines")?.toInt() ?: 0,
-                        isConnected = snap.getBoolean("isConnected") ?: false
+                        isConnected = snap.getBoolean("isConnected") ?: false,
+                        preferences = prefs
                     )
 
                     trySend(user)
+
                 } else {
                     trySend(null)
                 }
@@ -708,11 +712,34 @@ class Database(
         awaitClose { reg.remove() }
     }
 
+
     fun addFriend(
         uid: String
     ) {
-
+        //TODO
     }
+
+    suspend fun updatePreference(uid: String, key: String, value: Any) {
+        users
+            .document(uid)
+            .update("Preferences.$key", value)
+            .await()
+    }
+
+    suspend fun clearStats(uid: String) {
+        users
+            .document(uid)
+            .update(
+                mapOf(
+                    "tempsTotal" to 0L,
+                    "jalonsTermines" to 0,
+                    "exp" to 0,
+                    "level" to 1
+                )
+            )
+            .await()
+    }
+
 
 
 }

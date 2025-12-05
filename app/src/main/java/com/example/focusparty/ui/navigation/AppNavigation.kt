@@ -105,6 +105,7 @@ fun AppNavigation(
 
                     if (uid != null) {
                         MyApplication.lifecycleListener.startHeartbeatFor(uid)
+                        val user = db.getUser(uid)
                     }
 
                     navController.navigate("Home") {
@@ -141,10 +142,10 @@ fun AppNavigation(
         composable("Settings") { //TODO :
             val app = LocalContext.current.applicationContext as Application
 
-            val vm: CalendarViewModel = viewModel(
-                factory = CalendarViewModelFactory(db, navController, app)
+            val vm: SettingsViewModel = viewModel(
+                factory = SettingsViewModelFactory(db, navController, app)
             )
-            CalendarScreen (
+            SettingsScreen (
                 vm = vm
             )
         }
@@ -152,21 +153,21 @@ fun AppNavigation(
         composable("Stats") {//TODO :
             val app = LocalContext.current.applicationContext as Application
 
-            val vm: CalendarViewModel = viewModel(
-                factory = CalendarViewModelFactory(db, navController, app)
+            val vm: StatsViewModel = viewModel(
+                factory = StatsViewModelFactory(db, navController, app)
             )
-            CalendarScreen (
+            StatsScreen (
                 vm = vm
             )
         }
 
-        composable("AvatarChanger") {//TODO :
+        composable("AccountCustomization") {//TODO :
             val app = LocalContext.current.applicationContext as Application
 
-            val vm: CalendarViewModel = viewModel(
-                factory = CalendarViewModelFactory(db, navController, app)
+            val vm: AccountCustomizationViewModel = viewModel(
+                factory = AccountCustomizationViewModelFactory(db, navController, app)
             )
-            CalendarScreen (
+            AccountCustomizationScreen (
                 vm = vm
             )
         }

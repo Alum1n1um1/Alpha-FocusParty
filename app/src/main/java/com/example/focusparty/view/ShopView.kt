@@ -18,7 +18,7 @@ fun ShopScreen(
     Scaffold(
         bottomBar = {
             HomeBottomBar(
-                currentDestination = "Leaderboard",
+                currentDestination = "Shop",
                 onNavigate = { dest -> vm.goToDestination(dest) }
             )
         }
