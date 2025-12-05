@@ -143,6 +143,7 @@ class RoomViewModel(
     fun endJalon(index: Int, jalon: Jalon) = viewModelScope
         .launch{
         db.endJalon(roomId, index, jalon)
+        db.addExpToRoom(roomId, 250)
     }
 
     private fun detectTimerEvents(old: Timer, new: Timer) {

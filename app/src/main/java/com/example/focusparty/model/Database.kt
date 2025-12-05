@@ -399,32 +399,11 @@ class Database(
                     (snapUser.getLong("jalonsTermines") ?: 0L) + 1L
                 }
 
-                // --- EXP du salon ---
-                val newExp = currentRoomExp + 250L
-
-                // Calcul du level du salon
-                var expR = newExp
-                var lvl = currentRoomLevel
-                while (true) {
-                    val required = 50 * lvl
-                    if (expR >= required) {
-                        expR -= required
-                        lvl++
-                    } else {
-                        break
-                    }
-                }
-
                 // --- Écritures Firestore (toutes après les lectures) ---
 
                 tx.update(roomRef, "jalons", updatedList)
                 tx.update(roomRef, "jalonsTermines", currentRoomMilestones + 1L)
 
-                // Update EXP + LEVEL du salon
-                tx.update(roomRef, mapOf(
-                    "exp" to newExp,
-                    "level" to lvl
-                ))
 
                 // Users : points
                 for ((uid, pts) in newPoints) {
