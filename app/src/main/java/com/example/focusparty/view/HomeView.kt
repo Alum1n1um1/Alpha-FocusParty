@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.focusparty.model.Event
 import com.example.focusparty.model.Jalon
@@ -27,6 +28,7 @@ import com.example.focusparty.ui.components.HomeBottomBar
 import com.example.focusparty.ui.components.SurfaceLevel
 import com.example.focusparty.ui.components.TreeLevelImage
 import com.example.focusparty.ui.theme.*
+import com.example.focusparty.utils.formatDuration
 import com.example.focusparty.viewmodel.HomeViewModel
 import java.time.LocalDate
 import java.time.ZoneId
@@ -68,25 +70,10 @@ fun HomeScreen(
                     Stats(vm)
                 }
 
-                HorizontalDivider(
-                    thickness = 1.dp,
-                    color = MaterialTheme.colorScheme.secondary,
-                    modifier = Modifier
-                        .fillMaxWidth(0.65f)
-                        .align(Alignment.CenterHorizontally)
-                )
-
                 Box(modifier = Modifier.weight(2f)) {
                     RoomsSection(vm)
                 }
 
-                HorizontalDivider(
-                    thickness = 1.dp,
-                    color = MaterialTheme.colorScheme.secondary,
-                    modifier = Modifier
-                        .fillMaxWidth(0.65f)
-                        .align(Alignment.CenterHorizontally)
-                )
 
                 Box(modifier = Modifier.weight(2f)) {
                     EventSection(vm)
@@ -252,7 +239,9 @@ fun Stats(vm: HomeViewModel){
                 ) {
                     Text(
                         text = "LVL$level",
-                        modifier = Modifier.width(48.dp),
+                        modifier = Modifier
+                            .width(60.dp)
+                            .padding(4.dp),
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -269,7 +258,9 @@ fun Stats(vm: HomeViewModel){
 
                     Text(
                         text = "LVL" + (level + 1).toString(),
-                        modifier = Modifier.width(48.dp),
+                        modifier = Modifier
+                            .width(60.dp)
+                            .padding(4.dp),
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -282,29 +273,30 @@ fun Stats(vm: HomeViewModel){
                 ) {
                     Text(
                         text = "Points disponibles : $points",
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(start=12.dp)
                     )
+
                 }
+                val time = vm.workedTime
+
                 Row(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(text = "Temps passé cette semaine : TODO")
+                    Text(
+                        text = "Temps révisé : ${formatDuration(time)}",
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(start=12.dp))
                 }
             }
-            Canvas(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-                    .background(MaterialTheme.colorScheme.surfaceContainerLow)
-            ) {
-
-            }
+            //Canvas ??
         }
     }
 }
+
 
 @Composable
 fun RoomsSection(vm: HomeViewModel) {
@@ -441,7 +433,8 @@ fun RoomItem(room:Room,vm: HomeViewModel){
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier
                     .weight(1f)
-                    .padding(start = 4.dp)
+                    .padding(start = 4.dp),
+                fontSize = 20.sp
             )
             Row (
                 modifier = Modifier

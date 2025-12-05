@@ -1,20 +1,19 @@
 package com.example.focusparty.view
 
-import android.widget.NumberPicker
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
 import com.example.focusparty.model.Jalon
 import com.example.focusparty.model.Room
 import com.example.focusparty.viewmodel.RoomViewModel
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,34 +22,31 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import kotlinx.coroutines.delay
 import java.time.Duration
-import kotlin.properties.ReadOnlyProperty
-import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.filled.CoPresent
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.unit.dp
+import androidx.compose.material.icons.filled.EmojiEmotions
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.SettingsSuggest
-import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.HorizontalAlignmentLine
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Popup
 import com.example.focusparty.model.TimerState
+import com.example.focusparty.model.User
 import com.example.focusparty.ui.components.*
 import com.example.focusparty.ui.theme.*
+import com.example.focusparty.utils.formatDuration
 
 
 @Composable
@@ -105,44 +101,149 @@ fun RoomContent(
 }
 
 @Composable
-fun SalonTopBar(vm: RoomViewModel, room: Room) {
+fun SalonTopBar(
+    vm: RoomViewModel,
+    room: Room
+) {
 
-    Surface()
-    {
+    Surface(
+        color = MaterialTheme.colorScheme.primary,
+        shadowElevation = 4.dp
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .windowInsetsPadding(WindowInsets.statusBars)
-                .background(MaterialTheme.colorScheme.primary)
-        )
-        {
+                .height(56.dp)    // Hauteur standard Material TopBar
+                .windowInsetsPadding(WindowInsets.statusBars),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
 
             // --- Zone gauche ---
             Box(
                 modifier = Modifier.weight(1f),
                 contentAlignment = Alignment.CenterStart
-            )
-            {
-                Text("")
+            ) {
+                // Si tu veux un bouton retour plus tard, mets-le ici
             }
 
             // --- Zone centrale ---
             Box(
                 modifier = Modifier.weight(1f),
                 contentAlignment = Alignment.Center
-            )
-            {
-                Text(room.name)
+            ) {
+                Text(
+                    text = room.name,
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    style = MaterialTheme.typography.titleMedium
+                )
             }
 
             // --- Zone droite ---
             Box(
                 modifier = Modifier.weight(1f),
                 contentAlignment = Alignment.CenterEnd
-            )
-            {
-                Text("1")
-                Icon(Icons.Default.CoPresent, "Nombre de personnes connectés")
+            ) {
+                val connectedCount by vm.connectedCount.collectAsState()
+                val room by vm.roomState.collectAsState()
+
+                // Zone cliquable : nombre + icône
+                var showMenu by remember { mutableStateOf(false) }
+
+                Row(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .clickable { showMenu = true }
+                        .padding(horizontal = 6.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+
+                    Text(
+                        text = "$connectedCount",
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+
+                    Icon(
+                        imageVector = Icons.Default.CoPresent,
+                        contentDescription = "Personnes connectées",
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+
+                if (showMenu) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clickable(
+                                onClick = { showMenu = false },
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() }
+                            )
+                    ) {
+                        MemberList(
+                            onDismiss = { showMenu = false },
+                            room=room!!,
+                            vm=vm
+                        )
+                    }
+                }
+
+            }
+        }
+    }
+}
+
+
+@Composable
+fun MemberList(
+    onDismiss: () -> Unit,
+    room:Room,
+    vm : RoomViewModel
+) {
+    Popup(
+        alignment = Alignment.TopEnd,
+        onDismissRequest = onDismiss
+    ) {
+        val members = room.members
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(5.dp),
+            modifier = Modifier
+                .padding(15.dp,50.dp,15.dp,15.dp)
+                .fillMaxSize()
+                .background(
+                    color = MaterialTheme.colorScheme.secondary,
+                    shape = RoundedCornerShape(12.dp)
+                )
+        ) {
+            items(members.size) { index ->
+                val uid = members[index]
+                val userState by vm.getUserOfId(uid).collectAsState(initial = null)
+
+                val user = userState
+                if (user == null) {
+                    PlaceholderUserItem()
+                } else {
+                    MemberItem(
+                        user = user,
+                        onAddFriend = {
+                            vm.addFriend(uid)
+                            onDismiss
+                        },
+                        onMotivate = {
+                            vm.motivate(uid)
+                            onDismiss
+                        }
+                    )
+                }
+                if (index < members.lastIndex) {
+                    Divider(
+                        modifier = Modifier.padding(horizontal = 12.dp),
+                        color = MaterialTheme.colorScheme.onSecondary,
+                        thickness = 1.dp
+                    )
+                }
             }
         }
     }
@@ -291,15 +392,6 @@ fun StatChip(
         }
     }
 }
-
-fun formatDuration(ms: Long): String {
-    if (ms <= 0) return "0m"
-    val totalMinutes = ms / 60000
-    val hours = totalMinutes / 60
-    val minutes = totalMinutes % 60
-    return if (hours > 0) "${hours}h${minutes}m" else "${minutes}m"
-}
-
 
 @Composable
 fun RoomStats(vm: RoomViewModel) {
@@ -582,6 +674,71 @@ fun NumberPicker(
     }
 }
 
+@Composable
+fun MemberItem(
+    user : User,
+    onAddFriend: () -> Unit,
+    onMotivate: () -> Unit
+) {
+
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+
+        Column(
+            modifier = Modifier.weight(1f)
+        ) {
+            Text(
+                text = user.email,
+                color = MaterialTheme.colorScheme.onSecondary,
+                style = MaterialTheme.typography.labelSmall,
+                fontSize = 20.sp
+            )
+        }
+        IconButton(
+            onClick = onAddFriend,
+            modifier = Modifier.size(28.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.PersonAdd,
+                contentDescription = "Ajouter en ami",
+                tint = MaterialTheme.colorScheme.onSecondary
+            )
+        }
+        IconButton(
+            onClick = onMotivate,
+            modifier = Modifier.size(28.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.EmojiEmotions,
+                contentDescription = "Motiver",
+                tint = MaterialTheme.colorScheme.onSecondary
+            )
+        }
+
+    }
+}
+
+@Composable
+fun PlaceholderUserItem() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(12.dp)
+                .background(Color.Gray.copy(alpha = 0.3f), RoundedCornerShape(4.dp))
+        )
+    }
+}
 
 
 

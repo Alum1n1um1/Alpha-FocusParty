@@ -691,5 +691,49 @@ class Database(
         users.document(uid).update("lastSeen", com.google.firebase.Timestamp.now()).await()
     }
 
+    fun getUserWorkedTimeFlow(uid: String): Flow<Long> = callbackFlow {
+        val reg = users.document(uid).addSnapshotListener { snap, _ ->
+            val value = snap?.getLong("tempsTotal") ?: 0L
+            trySend(value)
+        }
+
+        awaitClose { reg.remove() }
+    }
+
+    fun getUser(uid: String): Flow<User?> = callbackFlow {
+        val reg = users
+            .document(uid)
+            .addSnapshotListener { snap, _ ->
+
+                if (snap != null && snap.exists()) {
+                    val user = User(
+                        uid = snap.getString("uid") ?: uid,
+                        email = snap.getString("email") ?: "",
+                        level = snap.getLong("level")?.toInt() ?: 1,
+                        exp = snap.getLong("exp")?.toInt() ?: 0,
+                        friends = snap.get("friends") as? List<String> ?: emptyList(),
+                        rooms = snap.get("rooms") as? List<String> ?: emptyList(),
+                        comment = snap.getString("comment") ?: "",
+                        points = snap.getLong("points")?.toInt() ?: 0,
+                        tempsTotal = snap.getLong("tempsTotal") ?: 0L,
+                        jalonsTermines = snap.getLong("jalonsTermines")?.toInt() ?: 0,
+                        isConnected = snap.getBoolean("isConnected") ?: false
+                    )
+
+                    trySend(user)
+                } else {
+                    trySend(null)
+                }
+            }
+
+        awaitClose { reg.remove() }
+    }
+
+    fun addFriend(
+        uid: String
+    ) {
+
+    }
+
 
 }

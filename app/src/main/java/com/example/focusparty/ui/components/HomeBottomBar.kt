@@ -18,8 +18,8 @@ fun HomeBottomBar(
     onNavigate: (String) -> Unit
 ) {
     NavigationBar(
-        containerColor = colorPurplelight1,
-        contentColor = colorPurpledark3,
+        containerColor = MaterialTheme.colorScheme.primary,
+        contentColor = MaterialTheme.colorScheme.onPrimary,
         tonalElevation = 3.dp
     ) {
         NavigationBarItem(

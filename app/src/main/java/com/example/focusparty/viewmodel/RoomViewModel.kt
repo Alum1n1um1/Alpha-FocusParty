@@ -8,10 +8,13 @@ import com.example.focusparty.model.*
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.util.Date
@@ -33,10 +36,21 @@ class RoomViewModel(
             )
     private val _remaining = MutableStateFlow(Duration.ZERO)
     val remaining: StateFlow<Duration> = _remaining.asStateFlow()
-
     private var countdownJob: Job? = null
     private var lastTimer: Timer? = null
     private var workedMs : Duration = Duration.ZERO
+    val connectedCount: StateFlow<Int> =
+        roomState
+            .filterNotNull()
+            .flatMapLatest { room ->
+                db.getConnectedCount(room.members)
+            }
+            .stateIn(
+                viewModelScope,
+                SharingStarted.WhileSubscribed(5_000),
+                0
+            )
+
 
     init {
         viewModelScope.launch {
@@ -131,8 +145,6 @@ class RoomViewModel(
         db.endJalon(roomId, index, jalon)
     }
 
-
-
     private fun detectTimerEvents(old: Timer, new: Timer) {
         Log.w("DEBUG","detectTimerEvents")
 
@@ -187,6 +199,20 @@ class RoomViewModel(
         workedMs = Duration.ZERO
     }
 
+    fun addFriend(
+        uid: String
+    ) {
+        db.addFriend(uid)
+    }
 
+    fun motivate(
+        uid: String
+    ) {
+
+    }
+
+    fun getUserOfId(uid: String): Flow<User?> {
+        return db.getUser(uid)
+    }
 
 }

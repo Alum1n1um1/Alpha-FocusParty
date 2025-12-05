@@ -1,5 +1,8 @@
 package com.example.focusparty.viewmodel
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.*
 import androidx.navigation.NavController
 import com.example.focusparty.MyApplication
@@ -52,6 +55,14 @@ class HomeViewModel(
     private val _exp = MutableStateFlow(0)
     val exp = _exp
 
+    var workedTime by mutableStateOf(0L)
+    init {
+        viewModelScope.launch {
+            db.getUserWorkedTimeFlow(uid).collect {
+                workedTime = it
+            }
+        }
+    }
 
 
 
@@ -137,11 +148,7 @@ class HomeViewModel(
         }
     }
 
-
-
     fun goToSettings() {
         navController.navigate("Settings")
     }
-
-
 }
