@@ -27,7 +27,7 @@ fun AppNavigation(
 ) {
     NavHost(
         navController = navController,
-        startDestination = "Home"  // TODO: Remettre Login avant d'envoyer
+        startDestination = "Login"  // TODO: Remettre Login avant d'envoyer
     ) {
 
 

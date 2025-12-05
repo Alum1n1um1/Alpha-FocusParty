@@ -38,6 +38,7 @@ class Database(
     private val events = store.collection("Events")
 
     fun addUser(uid: String, email:String){ // Ajoute un utilisateur
+
         val user = hashMapOf(
             "uid" to uid,
             "email" to email,
@@ -50,7 +51,11 @@ class Database(
             "points" to 500,
             "tempsTotal" to 0L,
             "jalonsTermines" to 0,
-            "isConnected" to false
+            "isConnected" to false,
+            "Preferences" to mapOf(
+                "darkMode" to false,
+                "notifications" to true
+            )
         )
         users.document(uid).set(user)
     }
