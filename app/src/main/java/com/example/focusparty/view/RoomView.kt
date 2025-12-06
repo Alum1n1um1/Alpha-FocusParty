@@ -211,7 +211,7 @@ fun MemberList(
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(5.dp),
             modifier = Modifier
-                .padding(15.dp,50.dp,15.dp,15.dp)
+                .padding(15.dp, 50.dp, 15.dp, 15.dp)
                 .fillMaxSize()
                 .background(
                     color = MaterialTheme.colorScheme.secondary,
@@ -407,6 +407,13 @@ fun JalonItem(
     val surfaceColor = if (jalon.isDone){ colorGreenlight3 } else {colorYellowlight3}
     val onSurfaceColor = if (jalon.isDone){ colorGreendark3 } else {colorYellowdark3}
 
+    var showDialog by remember{mutableStateOf(false)}
+
+    if(showDialog)
+    {
+        JalonSettings({ showDialog = false })
+    }
+
     CustomSurface(
         level = SurfaceLevel.High,
         color = surfaceColor
@@ -465,7 +472,7 @@ fun JalonItem(
                     .padding(end = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
-                IconButton(onClick = onSettings) {
+                IconButton(onClick = { showDialog = true }) {
                     Icon(
                         Icons.Default.SettingsSuggest,
                         contentDescription = "Paramètres du jalon",
@@ -475,6 +482,40 @@ fun JalonItem(
             }
         }
     }
+}
+
+@Composable
+fun JalonSettings(
+    OnDismiss: ()->Unit
+)
+{
+    AlertDialog(
+        OnDismiss,
+        {},
+        Modifier.height(250.dp),
+        text = {
+            Column (
+                Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            )
+            {
+                Button(
+                    {},
+                    Modifier.width(180.dp).padding(10.dp)
+                )
+                {
+                    Text("Modifier")
+                }
+                Button(
+                    {},
+                    Modifier.width(180.dp).padding(10.dp)
+                )
+                {
+                    Text("Supprimer")
+                }
+            }
+        }
+    )
 }
 
 @Composable
