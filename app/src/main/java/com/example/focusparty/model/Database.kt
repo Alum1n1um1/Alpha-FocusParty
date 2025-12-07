@@ -428,6 +428,11 @@ class Database(
         }
     }
 
+    suspend fun modifyJalon(roomId: String, index: Int, jalon: Jalon)
+    {
+        //TODO
+    }
+
     suspend fun deleteJalon(roomId: String, index: Int) {
         val roomRef = rooms.document(roomId)
 

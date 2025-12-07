@@ -146,6 +146,11 @@ class RoomViewModel(
         db.addExpToRoom(roomId, 250)
     }
 
+    fun modifyJalon(index: Int, jalon: Jalon) = viewModelScope
+        .launch {
+            db.modifyJalon(roomId, index, jalon)
+        }
+
     fun deleteJalon(index: Int) = viewModelScope.launch {
         db.deleteJalon(roomId, index)
     }
