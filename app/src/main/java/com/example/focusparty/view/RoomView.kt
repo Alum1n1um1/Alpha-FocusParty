@@ -47,6 +47,7 @@ import com.example.focusparty.model.User
 import com.example.focusparty.ui.components.*
 import com.example.focusparty.ui.theme.*
 import com.example.focusparty.utils.formatDuration
+import java.time.format.DateTimeFormatter
 
 
 @Composable
@@ -447,6 +448,19 @@ fun JalonItem(
             ) {
                 Text(
                     text = jalon.name,
+                    color = onSurfaceColor
+                )
+            }
+
+            Box(
+                modifier = Modifier
+                    .weight(1f),
+                contentAlignment = Alignment.CenterStart
+            ) {
+                Text(
+                    text = "Deadline :\n" + jalon.timestamp.format(
+                        DateTimeFormatter.ofPattern("dd/MM/yy")
+                    ),
                     color = onSurfaceColor
                 )
             }

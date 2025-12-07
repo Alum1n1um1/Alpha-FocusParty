@@ -18,6 +18,7 @@ import kotlin.time.Duration.Companion.milliseconds
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.Query
+import java.time.LocalDateTime
 import kotlin.math.max
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -73,7 +74,8 @@ class Database(
             "jalons" to room.jalons.map {
                 mapOf(
                     "name" to it.name,
-                    "isDone" to it.isDone
+                    "isDone" to it.isDone,
+                    "timestamp" to it.timestamp
                 )
             },
             "timer" to mapOf(
@@ -113,7 +115,8 @@ class Database(
                     ?.map { map ->
                         Jalon(
                             name = map["name"] as? String ?: "",
-                            isDone = map["isDone"] as? Boolean ?: false
+                            isDone = map["isDone"] as? Boolean ?: false,
+                            timestamp = map["timestamp"] as? LocalDateTime?: LocalDateTime.now()
                         )
                     } ?: emptyList()
 
@@ -189,7 +192,8 @@ class Database(
                     ?.map { map ->
                         Jalon(
                             name = map["name"] as? String ?: "",
-                            isDone = map["isDone"] as? Boolean ?: false
+                            isDone = map["isDone"] as? Boolean ?: false,
+                            timestamp = map["timestamp"] as? LocalDateTime?: LocalDateTime.now()
                         )
                     } ?: emptyList()
 
@@ -387,7 +391,8 @@ class Database(
                 // --- Mise à jour du jalon ---
                 val updatedJalon = mapOf(
                     "name" to jalon.name,
-                    "isDone" to jalon.isDone
+                    "isDone" to jalon.isDone,
+                    "timestamp" to jalon.timestamp
                 )
                 val updatedList = jalons.toMutableList()
                 updatedList[index] = updatedJalon
