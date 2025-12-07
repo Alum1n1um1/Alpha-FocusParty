@@ -146,6 +146,10 @@ class RoomViewModel(
         db.addExpToRoom(roomId, 250)
     }
 
+    fun deleteJalon(index: Int) = viewModelScope.launch {
+        db.deleteJalon(roomId, index)
+    }
+
     private fun detectTimerEvents(old: Timer, new: Timer) {
         Log.w("DEBUG","detectTimerEvents")
 

@@ -428,6 +428,38 @@ class Database(
         }
     }
 
+    suspend fun deleteJalon(roomId: String, index: Int) {
+        val roomRef = rooms.document(roomId)
+
+        try {
+            store.runTransaction { tx ->
+
+                val snapRoom = tx.get(roomRef)
+                if (!snapRoom.exists())
+                    throw IllegalStateException("Room introuvable : $roomId")
+
+                val jalons = snapRoom.get("jalons") as? List<Map<String, Any>>
+                    ?: throw IllegalStateException("Champ 'jalons' absent ou invalide")
+
+                if (index !in jalons.indices)
+                    throw IllegalArgumentException("Index jalon invalide : $index")
+
+                // --- Supprime le jalon ---
+                val updatedList = jalons.toMutableList()
+                updatedList.removeAt(index)
+
+                // --- Met à jour Firestore ---
+                tx.update(roomRef, "jalons", updatedList)
+
+            }.await()
+
+        } catch (e: Exception) {
+            Log.e("DEBUG_DELETE_JALON", "Erreur Firestore : ${e.message}", e)
+            throw e
+        }
+    }
+
+
     suspend fun addWorkedTimeToUser(uid: String, durationMs: Long) {
 
         val userRef = users.document(uid)

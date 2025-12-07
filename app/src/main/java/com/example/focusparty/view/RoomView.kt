@@ -263,7 +263,10 @@ fun ActionsMenu(vm: RoomViewModel,room : Room) {
                         jalon = jalon,
                         onFinish = {
                             vm.endJalon(index, jalon.copy(isDone=true)) },
-                        onSettings = {}
+                        {},
+                        {
+                            vm.deleteJalon(index)
+                        }
                     )
                 }
             }
@@ -402,7 +405,8 @@ fun RoomStats(vm: RoomViewModel) {
 fun JalonItem(
     jalon: Jalon,
     onFinish: () -> Unit,
-    onSettings: () -> Unit
+    onModify: () -> Unit,
+    onDelete: () -> Unit
 ) {
     val surfaceColor = if (jalon.isDone){ colorGreenlight3 } else {colorYellowlight3}
     val onSurfaceColor = if (jalon.isDone){ colorGreendark3 } else {colorYellowdark3}
@@ -411,7 +415,11 @@ fun JalonItem(
 
     if(showDialog)
     {
-        JalonSettings({ showDialog = false })
+        JalonSettings(
+            { showDialog = false },
+            onModify,
+            onDelete
+        )
     }
 
     CustomSurface(
@@ -486,11 +494,13 @@ fun JalonItem(
 
 @Composable
 fun JalonSettings(
-    OnDismiss: ()->Unit
+    onDismiss: ()->Unit,
+    onModify: ()->Unit,
+    onDelete: ()->Unit
 )
 {
     AlertDialog(
-        OnDismiss,
+        onDismiss,
         {},
         Modifier.height(250.dp),
         text = {
@@ -501,14 +511,21 @@ fun JalonSettings(
             {
                 Button(
                     {},
-                    Modifier.width(180.dp).padding(10.dp)
+                    Modifier
+                        .width(180.dp)
+                        .padding(10.dp)
                 )
                 {
                     Text("Modifier")
                 }
                 Button(
-                    {},
-                    Modifier.width(180.dp).padding(10.dp)
+                    {
+                        onDelete()
+                        onDismiss()
+                    },
+                    Modifier
+                        .width(180.dp)
+                        .padding(10.dp)
                 )
                 {
                     Text("Supprimer")
