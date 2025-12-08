@@ -47,6 +47,7 @@ import com.example.focusparty.model.User
 import com.example.focusparty.ui.components.*
 import com.example.focusparty.ui.theme.*
 import com.example.focusparty.utils.formatDuration
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 
@@ -264,7 +265,9 @@ fun ActionsMenu(vm: RoomViewModel,room : Room) {
                         jalon = jalon,
                         onFinish = {
                             vm.endJalon(index, jalon.copy(isDone=true)) },
-                        {},
+                        { newJalon ->
+                            vm.modifyJalon(index, newJalon)
+                        },
                         {
                             vm.deleteJalon(index)
                         }
@@ -406,7 +409,7 @@ fun RoomStats(vm: RoomViewModel) {
 fun JalonItem(
     jalon: Jalon,
     onFinish: () -> Unit,
-    onModify: () -> Unit,
+    onModify: (Jalon) -> Unit,
     onDelete: () -> Unit
 ) {
     val surfaceColor = if (jalon.isDone){ colorGreenlight3 } else {colorYellowlight3}
@@ -417,6 +420,7 @@ fun JalonItem(
     if(showDialog)
     {
         JalonSettings(
+            jalon,
             { showDialog = false },
             onModify,
             onDelete
@@ -508,11 +512,27 @@ fun JalonItem(
 
 @Composable
 fun JalonSettings(
+    jalon: Jalon,
     onDismiss: ()->Unit,
-    onModify: ()->Unit,
+    onModify: (Jalon)->Unit,
     onDelete: ()->Unit
 )
 {
+
+    var showModifyDialog by remember{mutableStateOf(false)}
+
+    if(showModifyDialog)
+    {
+        ModifyJalonDialogue(
+            jalon,
+            {
+                showModifyDialog = false
+                onDismiss()
+            },
+            onModify,
+        )
+    }
+
     AlertDialog(
         onDismiss,
         {},
@@ -524,7 +544,9 @@ fun JalonSettings(
             )
             {
                 Button(
-                    {},
+                    {
+                        showModifyDialog = true
+                    },
                     Modifier
                         .width(180.dp)
                         .padding(10.dp)
@@ -544,6 +566,61 @@ fun JalonSettings(
                 {
                     Text("Supprimer")
                 }
+            }
+        }
+    )
+}
+
+@Composable
+fun ModifyJalonDialogue(
+    jalon: Jalon,
+    onDismiss: () -> Unit,
+    onModify: (Jalon) -> Unit
+) {
+    var name by remember { mutableStateOf(jalon.name) }
+    var timestamp by remember { mutableStateOf(jalon.timestamp) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Modifier le jalon") },
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Nom") },
+                    singleLine = true
+                )
+
+                DatePicker(
+                    rememberDatePickerState(
+                        timestamp
+                            .atZone(ZoneId.systemDefault())
+                            .toInstant()
+                            .toEpochMilli()
+                    ),
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    val newJalon = jalon.copy(
+                        name = name,
+                        timestamp = timestamp
+                    )
+
+                    onModify(newJalon)
+                    onDismiss()
+                }
+            ) {
+                Text("Confirmer")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Annuler")
             }
         }
     )
