@@ -47,6 +47,7 @@ import com.example.focusparty.model.User
 import com.example.focusparty.ui.components.*
 import com.example.focusparty.ui.theme.*
 import com.example.focusparty.utils.formatDuration
+import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
@@ -578,8 +579,14 @@ fun ModifyJalonDialogue(
     onModify: (Jalon) -> Unit
 ) {
     var name by remember { mutableStateOf(jalon.name) }
-    var timestamp by remember { mutableStateOf(jalon.timestamp) }
 
+    val datePickerState = rememberDatePickerState(
+        initialSelectedDateMillis = jalon.timestamp
+            .atZone(ZoneId.systemDefault())
+            .toInstant()
+            .toEpochMilli()
+    )
+    val selectedDate = datePickerState.selectedDateMillis
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Modifier le jalon") },
@@ -593,25 +600,27 @@ fun ModifyJalonDialogue(
                     singleLine = true
                 )
 
-                DatePicker(
-                    rememberDatePickerState(
-                        timestamp
-                            .atZone(ZoneId.systemDefault())
-                            .toInstant()
-                            .toEpochMilli()
-                    ),
-                )
+                DatePicker(state = datePickerState)
             }
         },
         confirmButton = {
             TextButton(
                 onClick = {
-                    val newJalon = jalon.copy(
-                        name = name,
-                        timestamp = timestamp
-                    )
+                    if (selectedDate!= null)
+                    {
+                        val newTimestamp = Instant
+                            .ofEpochMilli(selectedDate)
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDateTime()
 
-                    onModify(newJalon)
+                        val newJalon = jalon.copy(
+                            name = name,
+                            timestamp = newTimestamp
+                        )
+
+                        onModify(newJalon)
+                    }
+
                     onDismiss()
                 }
             ) {
